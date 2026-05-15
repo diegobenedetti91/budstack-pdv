@@ -8,6 +8,12 @@ dist
 build
 out
 
+# Arquivos compilados dentro de src/ (gerados pelo tsc)
+packages/*/src/*.js
+packages/*/src/*.js.map
+packages/*/src/*.d.ts
+packages/*/src/*.d.ts.map
+
 # Environment variables
 .env
 .env.local

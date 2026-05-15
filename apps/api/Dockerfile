@@ -13,7 +13,11 @@ RUN pnpm install --frozen-lockfile
 # ── Build ────────────────────────────────────────────────────────────────────
 FROM deps AS builder
 COPY . .
+# 1. Compilar @budstack/types para gerar .d.ts
+RUN cd packages/types && npx tsc
+# 2. Gerar Prisma Client
 RUN cd packages/database && npx prisma generate
+# 3. Compilar API
 RUN pnpm --filter @budstack/api build
 
 # ── Runner (produção) ────────────────────────────────────────────────────────
@@ -26,7 +30,6 @@ COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/package.json ./
 
-# Cria pasta uploads com permissão de escrita
 RUN mkdir -p /app/uploads
 
 EXPOSE 3001

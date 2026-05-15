@@ -7,12 +7,12 @@ import { FileInterceptor } from '@nestjs/platform-express'
 import { ApiTags, ApiBearerAuth, ApiConsumes, ApiOperation, ApiBody } from '@nestjs/swagger'
 import { diskStorage } from 'multer'
 import { extname } from 'path'
-import { v4 as uuid } from 'uuid'
+import { randomUUID } from 'crypto'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 
 const storage = diskStorage({
   destination: './uploads',
-  filename: (_, file, cb) => cb(null, `${uuid()}${extname(file.originalname)}`),
+  filename: (_, file, cb) => cb(null, `${randomUUID()}${extname(file.originalname)}`),
 })
 
 @ApiTags('Uploads')

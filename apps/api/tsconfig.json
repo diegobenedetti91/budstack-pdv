@@ -5,14 +5,10 @@
     "moduleResolution": "node",
     "outDir": "./dist",
     "rootDir": "./src",
-    "baseUrl": "./",
-    "paths": {
-      "@budstack/types": ["../../packages/types/src"],
-      "@budstack/database": ["../../packages/database/src"]
-    },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "strictNullChecks": false
+    "strictNullChecks": false,
+    "strict": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
