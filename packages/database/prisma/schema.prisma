@@ -1,0 +1,431 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MULTI-TENANCY
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  plan      Plan     @default(BASIC)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company    Company?
+  users      User[]
+  tables     Table[]
+  categories Category[]
+  products   Product[]
+  orders     Order[]
+  shifts     Shift[]
+  printers   Printer[]
+}
+
+enum Plan {
+  BASIC
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EMPRESA / CONFIGURAÇÕES
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Company {
+  id       String @id @default(cuid())
+  tenantId String @unique
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Dados básicos
+  tradeName             String
+  companyName           String
+  cnpj                  String   @unique
+  stateRegistration     String?
+  municipalRegistration String?
+
+  // Endereço
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  zipCode      String
+
+  // Contato
+  phone   String
+  email   String
+  website String?
+
+  // Configurações operacionais
+  serviceChargePercent Decimal  @db.Decimal(5, 2) @default(10)
+  openingHours         String?
+  timezone             String   @default("America/Sao_Paulo")
+  currency             String   @default("BRL")
+
+  // Fiscal
+  taxRegime              TaxRegime  @default(SIMPLES_NACIONAL)
+  satSerialNumber        String?
+  satActivationCode      String?
+  nfceSerialNumber       Int?
+  nfceCscId              String?
+  nfceCscToken           String?
+  nfceEnvironment        NfceEnv    @default(HOMOLOGACAO)
+
+  // TEF
+  tefProvider  TefProvider?
+  tefIpAddress String?
+  tefPort      Int?
+  tefStoreId   String?
+  tefTerminalId String?
+
+  // Aparência
+  logoUrl      String?
+  primaryColor String?  @default("#F97316")
+  accentColor  String?  @default("#1E293B")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum TaxRegime {
+  SIMPLES_NACIONAL
+  LUCRO_PRESUMIDO
+  LUCRO_REAL
+  MEI
+}
+
+enum NfceEnv {
+  HOMOLOGACAO
+  PRODUCAO
+}
+
+enum TefProvider {
+  SITEF
+  REDE
+  CIELO
+  STONE
+  GETNET
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USUÁRIOS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name      String
+  email     String
+  password  String
+  role      UserRole @default(WAITER)
+  isActive  Boolean  @default(true)
+  avatarUrl String?
+  pin       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
+  shifts Shift[]
+
+  @@unique([email, tenantId])
+  @@index([tenantId])
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  CASHIER
+  WAITER
+  KITCHEN
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MESAS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Table {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  number   Int
+  name     String?
+  capacity Int         @default(4)
+  status   TableStatus @default(AVAILABLE)
+  qrCode   String?
+  section  String?
+
+  orders Order[]
+
+  @@unique([number, tenantId])
+  @@index([tenantId])
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  INACTIVE
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CARDÁPIO
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Category {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name      String
+  icon      String?
+  imageUrl  String?
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+model Product {
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  name        String
+  description String?
+  price       Decimal @db.Decimal(10, 2)
+  imageUrl    String?
+  code        String?
+  isActive    Boolean @default(true)
+  isAvailable Boolean @default(true)
+  printerId   String?
+
+  variations ProductVariation[]
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([code, tenantId])
+  @@index([tenantId, categoryId])
+}
+
+model ProductVariation {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  name     String
+  price    Decimal @db.Decimal(10, 2)
+  isActive Boolean @default(true)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PEDIDOS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Order {
+  id       String  @id @default(cuid())
+  tenantId String
+  tenant   Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tableId  String?
+  table    Table?  @relation(fields: [tableId], references: [id])
+  userId   String?
+  user     User?   @relation(fields: [userId], references: [id])
+
+  orderNumber   Int
+  type          OrderType   @default(TABLE)
+  status        OrderStatus @default(OPEN)
+  customerName  String?
+  customerCount Int?        @default(1)
+
+  subtotal      Decimal @db.Decimal(10, 2) @default(0)
+  discount      Decimal @db.Decimal(10, 2) @default(0)
+  serviceCharge Decimal @db.Decimal(10, 2) @default(0)
+  total         Decimal @db.Decimal(10, 2) @default(0)
+
+  notes String?
+
+  items    OrderItem[]
+  payments Payment[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  closedAt  DateTime?
+
+  @@unique([orderNumber, tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, tableId])
+}
+
+enum OrderType {
+  TABLE
+  COUNTER
+  KIOSK
+}
+
+enum OrderStatus {
+  OPEN
+  IN_PROGRESS
+  READY
+  DELIVERED
+  CLOSED
+  CANCELLED
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  quantity   Int
+  unitPrice  Decimal @db.Decimal(10, 2)
+  totalPrice Decimal @db.Decimal(10, 2)
+  notes      String?
+  status     OrderItemStatus @default(PENDING)
+
+  sentToKitchenAt DateTime?
+  readyAt         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+}
+
+enum OrderItemStatus {
+  PENDING
+  IN_PRODUCTION
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGAMENTOS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Payment {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  method  PaymentMethod
+  amount  Decimal       @db.Decimal(10, 2)
+  status  PaymentStatus @default(PENDING)
+
+  // TEF
+  tefNsu      String?
+  tefAuthCode String?
+  tefBrand    String?
+
+  // Fiscal
+  receiptNumber Int?
+  nfceKey       String?
+
+  // Troco (dinheiro)
+  cashReceived Decimal? @db.Decimal(10, 2)
+  change       Decimal? @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum PaymentMethod {
+  CASH
+  CREDIT_CARD
+  DEBIT_CARD
+  PIX
+  VOUCHER
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  REFUNDED
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TURNOS DE CAIXA
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Shift {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+
+  openedAt       DateTime  @default(now())
+  closedAt       DateTime?
+  openingBalance Decimal   @db.Decimal(10, 2)
+  closingBalance Decimal?  @db.Decimal(10, 2)
+  notes          String?
+
+  @@index([tenantId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IMPRESSORAS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Printer {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name        String
+  type        PrinterType @default(NETWORK)
+  ipAddress   String?
+  port        Int?        @default(9100)
+  usbPath     String?
+  isActive    Boolean     @default(true)
+  isDefault   Boolean     @default(false)
+
+  // Para qual setor imprime
+  destination PrinterDestination @default(KITCHEN)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+enum PrinterType {
+  NETWORK
+  USB
+  BLUETOOTH
+}
+
+enum PrinterDestination {
+  KITCHEN
+  BAR
+  CASHIER
+  BOTH
+}

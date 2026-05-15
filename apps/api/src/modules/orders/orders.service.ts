@@ -1,0 +1,185 @@
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
+import { PrismaService } from '../prisma/prisma.service'
+import { KitchenGateway } from '../kitchen/kitchen.gateway'
+import { CreateOrderDto } from './dto/create-order.dto'
+import { AddItemDto } from './dto/add-item.dto'
+import { OrderStatus, OrderItemStatus } from '@budstack/types'
+
+@Injectable()
+export class OrdersService {
+  constructor(
+    private prisma: PrismaService,
+    private kitchen: KitchenGateway,
+  ) {}
+
+  async findAll(tenantId: string, status?: OrderStatus) {
+    return this.prisma.order.findMany({
+      where: { tenantId, ...(status && { status }) },
+      include: {
+        table: true,
+        user: { select: { id: true, name: true } },
+        items: { include: { product: true } },
+        payments: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+  }
+
+  async findOne(tenantId: string, id: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { id, tenantId },
+      include: {
+        table: true,
+        user: { select: { id: true, name: true } },
+        items: { include: { product: true } },
+        payments: true,
+      },
+    })
+    if (!order) throw new NotFoundException('Pedido não encontrado')
+    return order
+  }
+
+  async findOpenByTable(tenantId: string, tableId: string) {
+    return this.prisma.order.findFirst({
+      where: { tenantId, tableId, status: { in: ['OPEN', 'IN_PROGRESS', 'READY', 'DELIVERED'] } },
+      include: {
+        table: true,
+        items: { include: { product: true } },
+        payments: true,
+      },
+    })
+  }
+
+  async create(tenantId: string, userId: string, dto: CreateOrderDto) {
+    const lastOrder = await this.prisma.order.findFirst({
+      where: { tenantId },
+      orderBy: { orderNumber: 'desc' },
+      select: { orderNumber: true },
+    })
+    const orderNumber = (lastOrder?.orderNumber ?? 0) + 1
+
+    if (dto.tableId) {
+      const openOrder = await this.findOpenByTable(tenantId, dto.tableId)
+      if (openOrder) throw new BadRequestException('Mesa já possui um pedido aberto')
+
+      await this.prisma.table.update({
+        where: { id: dto.tableId },
+        data: { status: 'OCCUPIED' },
+      })
+      this.kitchen.emitTableStatus(tenantId, { tableId: dto.tableId, status: 'OCCUPIED' })
+    }
+
+    return this.prisma.order.create({
+      data: {
+        tenantId,
+        userId,
+        tableId: dto.tableId,
+        orderNumber,
+        type: dto.type ?? 'TABLE',
+        customerName: dto.customerName,
+        customerCount: dto.customerCount,
+        notes: dto.notes,
+      },
+      include: { table: true, items: true },
+    })
+  }
+
+  async addItem(tenantId: string, orderId: string, dto: AddItemDto) {
+    const order = await this.findOne(tenantId, orderId)
+    if (order.status === 'CLOSED' || order.status === 'CANCELLED') {
+      throw new BadRequestException('Não é possível adicionar itens a um pedido fechado')
+    }
+
+    const product = await this.prisma.product.findFirst({
+      where: { id: dto.productId, tenantId, isActive: true },
+    })
+    if (!product) throw new NotFoundException('Produto não encontrado')
+
+    const unitPrice = Number(product.price)
+    const totalPrice = unitPrice * dto.quantity
+
+    const item = await this.prisma.orderItem.create({
+      data: {
+        orderId,
+        productId: dto.productId,
+        quantity: dto.quantity,
+        unitPrice,
+        totalPrice,
+        notes: dto.notes,
+        sentToKitchenAt: new Date(),
+      },
+      include: { product: true },
+    })
+
+    await this.recalculateTotal(orderId, tenantId)
+
+    // Atualiza status do pedido para IN_PROGRESS se estava OPEN
+    if (order.status === 'OPEN') {
+      await this.prisma.order.update({ where: { id: orderId }, data: { status: 'IN_PROGRESS' } })
+    }
+
+    // Emite para cozinha
+    this.kitchen.emitNewOrder(tenantId, {
+      orderId,
+      orderNumber: order.orderNumber,
+      tableId: order.tableId,
+      item: {
+        id: item.id,
+        productId: item.productId,
+        productName: item.product.name,
+        quantity: item.quantity,
+        notes: item.notes,
+        status: item.status,
+      },
+    })
+
+    return item
+  }
+
+  async updateItemStatus(tenantId: string, orderId: string, itemId: string, status: OrderItemStatus) {
+    await this.findOne(tenantId, orderId)
+    const item = await this.prisma.orderItem.update({
+      where: { id: itemId },
+      data: { status, ...(status === 'READY' && { readyAt: new Date() }) },
+    })
+
+    this.kitchen.emitOrderItemStatus(tenantId, { orderId, itemId, status })
+
+    return item
+  }
+
+  async updateStatus(tenantId: string, orderId: string, status: OrderStatus) {
+    const order = await this.findOne(tenantId, orderId)
+
+    const updates: any = { status }
+    if (status === 'CLOSED' || status === 'CANCELLED') {
+      updates.closedAt = new Date()
+      if (order.tableId) {
+        await this.prisma.table.update({
+          where: { id: order.tableId },
+          data: { status: 'AVAILABLE' },
+        })
+        this.kitchen.emitTableStatus(tenantId, { tableId: order.tableId, status: 'AVAILABLE' })
+      }
+    }
+
+    return this.prisma.order.update({ where: { id: orderId }, data: updates })
+  }
+
+  private async recalculateTotal(orderId: string, tenantId: string) {
+    const items = await this.prisma.orderItem.findMany({
+      where: { orderId, status: { not: 'CANCELLED' } },
+    })
+    const subtotal = items.reduce((acc, item) => acc + Number(item.totalPrice), 0)
+
+    const order = await this.prisma.order.findFirst({ where: { id: orderId, tenantId } })
+    const company = await this.prisma.company.findUnique({ where: { tenantId } })
+    const serviceCharge = subtotal * Number(company?.serviceChargePercent ?? 0) / 100
+    const total = subtotal + serviceCharge - Number(order?.discount ?? 0)
+
+    await this.prisma.order.update({
+      where: { id: orderId },
+      data: { subtotal, serviceCharge, total },
+    })
+  }
+}
