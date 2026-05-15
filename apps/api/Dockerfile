@@ -13,12 +13,16 @@ RUN pnpm install --frozen-lockfile
 # ── Build ────────────────────────────────────────────────────────────────────
 FROM deps AS builder
 COPY . .
-# 1. Compilar @budstack/types para gerar .d.ts
+# 1. Compilar @budstack/types
 RUN cd packages/types && npx tsc
 # 2. Gerar Prisma Client
 RUN cd packages/database && npx prisma generate
-# 3. Compilar API
+# 3. Build NestJS
 RUN pnpm --filter @budstack/api build
+# 4. Criar deploy standalone com node_modules reais (sem symlinks do pnpm)
+RUN pnpm --filter @budstack/api --prod deploy /standalone
+# 5. Copiar o Prisma client gerado para o deploy
+RUN cp -r /app/node_modules/.prisma /standalone/node_modules/.prisma 2>/dev/null || true
 
 # ── Runner (produção) ────────────────────────────────────────────────────────
 FROM node:20-alpine AS runner
@@ -27,7 +31,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY --from=builder /app/apps/api/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /standalone/node_modules ./node_modules
 COPY --from=builder /app/apps/api/package.json ./
 
 RUN mkdir -p /app/uploads
