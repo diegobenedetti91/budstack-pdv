@@ -150,7 +150,7 @@ export default function NotificacoesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl shadow-lg" style={{ background: 'linear-gradient(135deg, #22D3EE 0%, #3B82F6 50%, #8B5CF6 100%)', boxShadow: '0 4px 16px rgba(6,182,212,0.3)' }}">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl shadow-lg" style={{ background: 'linear-gradient(135deg, #22D3EE 0%, #3B82F6 50%, #8B5CF6 100%)', boxShadow: '0 4px 16px rgba(6,182,212,0.3)' }}>
             <Bell className="h-6 w-6 text-white" />
           </div>
           <div>
