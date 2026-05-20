@@ -6,29 +6,28 @@ export class ReportsService {
   constructor(private prisma: PrismaService) {}
 
   async getDashboard(tenantId: string, from: Date, to: Date) {
-    const [orders, payments, topProducts, hourlyRevenue] = await Promise.all([
-      // Resumo de pedidos
+    const [orders, payments, topProducts, hourlyRevenue, allItems] = await Promise.all([
       this.prisma.order.findMany({
         where: { tenantId, createdAt: { gte: from, lte: to }, status: { not: 'CANCELLED' } },
         select: { id: true, total: true, status: true, createdAt: true, type: true },
       }),
 
-      // Pagamentos aprovados
       this.prisma.payment.findMany({
         where: { order: { tenantId }, createdAt: { gte: from, lte: to }, status: 'APPROVED' },
         select: { method: true, amount: true },
       }),
 
-      // Produtos mais pedidos
       this.prisma.orderItem.groupBy({
         by: ['productId'],
-        where: { order: { tenantId, createdAt: { gte: from, lte: to }, status: { not: 'CANCELLED' } }, status: { not: 'CANCELLED' } },
+        where: {
+          order: { tenantId, createdAt: { gte: from, lte: to }, status: { not: 'CANCELLED' } },
+          status: { not: 'CANCELLED' },
+        },
         _sum: { quantity: true, totalPrice: true },
         orderBy: { _sum: { quantity: 'desc' } },
         take: 10,
       }),
 
-      // Receita por hora
       this.prisma.$queryRaw<Array<{ hour: number; revenue: number }>>`
         SELECT EXTRACT(HOUR FROM o."createdAt") as hour,
                SUM(o.total)::float as revenue
@@ -40,11 +39,28 @@ export class ReportsService {
         GROUP BY hour
         ORDER BY hour
       `,
+
+      // Todos os itens para calcular custo total real
+      this.prisma.orderItem.findMany({
+        where: {
+          order: { tenantId, createdAt: { gte: from, lte: to }, status: { not: 'CANCELLED' } },
+          status: { not: 'CANCELLED' },
+        },
+        select: { quantity: true, product: { select: { costPrice: true } } },
+      }),
     ])
 
     const totalRevenue = orders.reduce((acc, o) => acc + Number(o.total), 0)
     const closedOrders = orders.filter((o) => o.status === 'CLOSED').length
     const avgTicket = closedOrders > 0 ? totalRevenue / closedOrders : 0
+
+    // Custo total e margem bruta
+    const totalCost = allItems.reduce(
+      (acc, item) => acc + Number(item.product.costPrice ?? 0) * item.quantity,
+      0,
+    )
+    const grossProfit = totalRevenue - totalCost
+    const grossMarginPercent = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0
 
     // Receita por método de pagamento
     const byMethod: Record<string, number> = {}
@@ -52,23 +68,35 @@ export class ReportsService {
       byMethod[p.method] = (byMethod[p.method] ?? 0) + Number(p.amount)
     })
 
-    // Produtos top — buscar nomes
+    // Produtos top — nomes + custo
     const productIds = topProducts.map((p) => p.productId)
-    const productNames = await this.prisma.product.findMany({
+    const productData = await this.prisma.product.findMany({
       where: { id: { in: productIds } },
-      select: { id: true, name: true, imageUrl: true },
+      select: { id: true, name: true, imageUrl: true, costPrice: true },
     })
-    const nameMap = Object.fromEntries(productNames.map((p) => [p.id, p]))
+    const productMap = Object.fromEntries(productData.map((p) => [p.id, p]))
 
-    const topItems = topProducts.map((p) => ({
-      productId: p.productId,
-      name: nameMap[p.productId]?.name ?? 'Desconhecido',
-      imageUrl: nameMap[p.productId]?.imageUrl,
-      quantity: p._sum.quantity ?? 0,
-      revenue: Number(p._sum.totalPrice ?? 0),
-    }))
+    const topItems = topProducts.map((p) => {
+      const product = productMap[p.productId]
+      const revenue = Number(p._sum.totalPrice ?? 0)
+      const quantity = p._sum.quantity ?? 0
+      const costPrice = Number(product?.costPrice ?? 0)
+      const cost = costPrice * quantity
+      const profit = revenue - cost
+      const marginPercent = revenue > 0 && costPrice > 0 ? (profit / revenue) * 100 : null
+      return {
+        productId: p.productId,
+        name: product?.name ?? 'Desconhecido',
+        imageUrl: product?.imageUrl ?? null,
+        quantity,
+        revenue,
+        cost,
+        profit,
+        marginPercent,
+      }
+    })
 
-    // Pedidos por dia (últimos 7 dias)
+    // Pedidos por dia
     const dailyMap: Record<string, { orders: number; revenue: number }> = {}
     orders.forEach((o) => {
       const day = new Date(o.createdAt).toISOString().slice(0, 10)
@@ -87,6 +115,9 @@ export class ReportsService {
         closedOrders,
         avgTicket,
         cancelledOrders: orders.filter((o) => o.status === 'CANCELLED').length,
+        totalCost,
+        grossProfit,
+        grossMarginPercent,
       },
       byMethod,
       topItems,
