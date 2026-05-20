@@ -1,20 +1,25 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
+import { IsBoolean, IsNumber, IsOptional, IsString, Min } from 'class-validator'
 import { PrismaService } from '../prisma/prisma.service'
 
 export class CreateProductDto {
-  categoryId: string
-  name: string
-  description?: string
-  price: number
-  imageUrl?: string
-  code?: string
-  isAvailable?: boolean
-  printerId?: string
+  @IsString() categoryId: string
+  @IsString() name: string
+  @IsOptional() @IsString() description?: string
+  @IsNumber() @Min(0) price: number
+  @IsOptional() @IsNumber() @Min(0) costPrice?: number
+  @IsOptional() @IsString() imageUrl?: string
+  @IsOptional() @IsString() code?: string
+  @IsOptional() @IsBoolean() isAvailable?: boolean
+  @IsOptional() @IsString() printerId?: string
+  @IsOptional() @IsBoolean() stockControl?: boolean
+  @IsOptional() @IsNumber() @Min(0) stockQuantity?: number
+  @IsOptional() @IsNumber() @Min(0) stockMinimum?: number
 }
 
 export class CreateVariationDto {
-  name: string
-  price: number
+  @IsString() name: string
+  @IsNumber() @Min(0) price: number
 }
 
 @Injectable()

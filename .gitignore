@@ -16,8 +16,10 @@ packages/*/src/*.d.ts.map
 
 # Environment variables
 .env
+.env.dev
 .env.local
 .env.*.local
+.env.production
 !.env.example
 
 # Turbo cache
@@ -36,13 +38,18 @@ pnpm-debug.log*
 *.swp
 *.swo
 
+# Claude Code memory
+.claude/
+
+# TypeScript build info
+*.tsbuildinfo
+
 # OS
 .DS_Store
 Thumbs.db
 
-# Prisma
-packages/database/prisma/migrations
-!packages/database/prisma/migrations/.gitkeep
+# Prisma (migration files must be tracked)
+packages/database/prisma/migrations/.gitkeep
 
 # Docker volumes
 postgres_data

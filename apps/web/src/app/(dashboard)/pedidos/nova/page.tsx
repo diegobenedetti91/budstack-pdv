@@ -114,7 +114,7 @@ function NovoPedidoContent() {
         <div className="flex gap-2 overflow-x-auto border-b border-slate-100 p-3 dark:border-slate-800">
           <button
             onClick={() => setSelectedCategory(null)}
-            className={cn('shrink-0 rounded-xl px-3 py-1.5 text-xs font-medium transition-colors', !selectedCategory ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300')}
+            className={cn('shrink-0 rounded-xl px-3 py-1.5 text-xs font-medium transition-colors', !selectedCategory ? 'bg-cyan-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300')}
           >
             Todos
           </button>
@@ -122,7 +122,7 @@ function NovoPedidoContent() {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id === selectedCategory ? null : cat.id)}
-              className={cn('flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-colors', cat.id === selectedCategory ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300')}
+              className={cn('flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-colors', cat.id === selectedCategory ? 'bg-cyan-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300')}
             >
               {cat.icon && <span>{cat.icon}</span>} {cat.name}
             </button>
@@ -142,16 +142,16 @@ function NovoPedidoContent() {
                   className="group relative overflow-hidden rounded-2xl border border-slate-100 bg-white transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
                 >
                   {/* Image or placeholder */}
-                  <div className="relative h-28 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/10 dark:to-orange-900/20">
+                  <div className="relative h-28 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-800">
                     {product.imageUrl ? (
                       <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
                     ) : (
                       <div className="flex h-full items-center justify-center">
-                        <ChefHat className="h-10 w-10 text-orange-200" />
+                        <ChefHat className="h-10 w-10 text-slate-300" />
                       </div>
                     )}
                     {inCart && (
-                      <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white shadow">
+                      <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500 text-[10px] font-bold text-white shadow">
                         {inCart.quantity}
                       </div>
                     )}
@@ -161,19 +161,19 @@ function NovoPedidoContent() {
                     <p className="text-sm font-semibold text-slate-900 leading-tight dark:text-white">{product.name}</p>
                     {product.description && <p className="mt-0.5 text-xs text-slate-400 line-clamp-1">{product.description}</p>}
                     <div className="mt-2 flex items-center justify-between">
-                      <span className="font-bold text-orange-600">{formatCurrency(product.price)}</span>
+                      <span className="font-bold text-cyan-600">{formatCurrency(product.price)}</span>
                       {inCart ? (
                         <div className="flex items-center gap-1">
                           <button onClick={() => updateQty(product.id, -1)} className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-500 dark:bg-slate-800">
                             <Minus className="h-3 w-3" />
                           </button>
                           <span className="w-5 text-center text-sm font-bold">{inCart.quantity}</span>
-                          <button onClick={() => addToCart(product)} className="flex h-6 w-6 items-center justify-center rounded-lg bg-orange-500 text-white hover:bg-orange-600">
+                          <button onClick={() => addToCart(product)} className="flex h-6 w-6 items-center justify-center rounded-lg bg-cyan-500 text-white hover:bg-cyan-600">
                             <Plus className="h-3 w-3" />
                           </button>
                         </div>
                       ) : (
-                        <button onClick={() => addToCart(product)} className="flex h-7 w-7 items-center justify-center rounded-xl bg-orange-500 text-white shadow-sm hover:bg-orange-600 transition-colors">
+                        <button onClick={() => addToCart(product)} className="flex h-7 w-7 items-center justify-center rounded-xl bg-cyan-500 text-white shadow-sm hover:bg-cyan-600 transition-colors">
                           <Plus className="h-3.5 w-3.5" />
                         </button>
                       )}
@@ -197,10 +197,10 @@ function NovoPedidoContent() {
       <div className="flex w-80 shrink-0 flex-col rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="border-b border-slate-100 p-4 dark:border-slate-800">
           <div className="flex items-center gap-2">
-            <ShoppingCart className="h-4 w-4 text-orange-500" />
+            <ShoppingCart className="h-4 w-4 text-cyan-500" />
             <h3 className="font-semibold text-slate-900 dark:text-white">Comanda</h3>
             {itemCount > 0 && (
-              <span className="ml-auto rounded-full bg-orange-500 px-2 py-0.5 text-xs font-bold text-white">{itemCount}</span>
+              <span className="ml-auto rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-white">{itemCount}</span>
             )}
           </div>
         </div>
@@ -225,14 +225,14 @@ function NovoPedidoContent() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-900 leading-tight dark:text-white truncate">{item.product.name}</p>
-                    <p className="text-xs text-orange-600 font-semibold">{formatCurrency(item.product.price * item.quantity)}</p>
+                    <p className="text-xs text-cyan-600 font-semibold">{formatCurrency(item.product.price * item.quantity)}</p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <button onClick={() => updateQty(item.product.id, -1)} className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 hover:bg-red-50 hover:text-red-500 dark:bg-slate-800">
                       {item.quantity === 1 ? <Trash2 className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
                     </button>
                     <span className="w-5 text-center text-sm font-bold text-slate-900 dark:text-white">{item.quantity}</span>
-                    <button onClick={() => addToCart(item.product)} className="flex h-6 w-6 items-center justify-center rounded-lg bg-orange-500 text-white hover:bg-orange-600">
+                    <button onClick={() => addToCart(item.product)} className="flex h-6 w-6 items-center justify-center rounded-lg bg-cyan-500 text-white hover:bg-cyan-600">
                       <Plus className="h-3 w-3" />
                     </button>
                   </div>
@@ -247,12 +247,12 @@ function NovoPedidoContent() {
                     onBlur={() => setEditingNote(null)}
                     onKeyDown={(e) => e.key === 'Enter' && setEditingNote(null)}
                     placeholder="Observação (ex: sem cebola)"
-                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs outline-none focus:border-orange-300 dark:bg-slate-800 dark:border-slate-700"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs outline-none focus:border-cyan-300 dark:bg-slate-800 dark:border-slate-700"
                   />
                 ) : (
                   <button
                     onClick={() => setEditingNote(item.product.id)}
-                    className="mt-1 flex items-center gap-1 text-xs text-slate-400 hover:text-orange-500"
+                    className="mt-1 flex items-center gap-1 text-xs text-slate-400 hover:text-cyan-500"
                   >
                     <StickyNote className="h-3 w-3" />
                     {item.notes ? <span className="truncate text-slate-500">{item.notes}</span> : 'Adicionar observação'}
@@ -274,7 +274,7 @@ function NovoPedidoContent() {
               onClick={() => sendOrder.mutate()}
               disabled={sendOrder.isPending}
               size="lg"
-              className="w-full gap-2 bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/25"
+              className="w-full gap-2 text-white shadow-lg hover:opacity-90" style={{ background: 'linear-gradient(135deg, #22D3EE 0%, #3B82F6 50%, #8B5CF6 100%)', boxShadow: '0 8px 24px rgba(6,182,212,0.25)' }}
             >
               {sendOrder.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               Enviar para Cozinha
@@ -288,7 +288,7 @@ function NovoPedidoContent() {
 
 export default function NovoPedidoPage() {
   return (
-    <Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-orange-500" /></div>}>
+    <Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-cyan-500" /></div>}>
       <NovoPedidoContent />
     </Suspense>
   )

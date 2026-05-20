@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common'
+import { IsInt, IsOptional, IsString, Min } from 'class-validator'
 import { PrismaService } from '../prisma/prisma.service'
 
 export class CreateTableDto {
-  number: number
-  name?: string
-  capacity?: number
-  section?: string
+  @IsInt() @Min(1) number: number
+  @IsOptional() @IsString() name?: string
+  @IsOptional() @IsInt() @Min(1) capacity?: number
+  @IsOptional() @IsString() section?: string
 }
 
 @Injectable()

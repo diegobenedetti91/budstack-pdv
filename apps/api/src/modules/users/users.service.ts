@@ -1,14 +1,15 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common'
+import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator'
 import * as bcrypt from 'bcryptjs'
 import { PrismaService } from '../prisma/prisma.service'
 import { UserRole } from '@budstack/types'
 
 export class CreateUserDto {
-  name: string
-  email: string
-  password: string
-  role?: UserRole
-  pin?: string
+  @IsString() name: string
+  @IsEmail() email: string
+  @IsString() @MinLength(8) password: string
+  @IsOptional() @IsEnum(UserRole) role?: UserRole
+  @IsOptional() @IsString() pin?: string
 }
 
 @Injectable()

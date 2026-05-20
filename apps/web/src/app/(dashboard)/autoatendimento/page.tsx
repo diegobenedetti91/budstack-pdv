@@ -38,7 +38,7 @@ export default function AutoatendimentoPage() {
         <Card className="border-0 shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Monitor className="h-5 w-5 text-orange-500" /> Link do Kiosk
+              <Monitor className="h-5 w-5 text-cyan-500" /> Link do Kiosk
             </CardTitle>
             <CardDescription>
               Abra esta URL em um tablet ou totem para os clientes fazerem pedidos
@@ -62,7 +62,7 @@ export default function AutoatendimentoPage() {
         <Card className="border-0 shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <QrCode className="h-5 w-5 text-orange-500" /> Como funciona
+              <QrCode className="h-5 w-5 text-cyan-500" /> Como funciona
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -75,7 +75,7 @@ export default function AutoatendimentoPage() {
                 'Cliente acompanha o status em tempo real na tela',
               ].map((step, i) => (
                 <li key={i} className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-xs font-bold text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400">
                     {i + 1}
                   </span>
                   {step}

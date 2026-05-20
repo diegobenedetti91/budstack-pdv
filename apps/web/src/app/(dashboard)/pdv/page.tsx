@@ -20,7 +20,7 @@ const paymentMethods = [
   { key: PaymentMethod.CREDIT_CARD, label: 'Crédito', icon: CreditCard, color: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/40 dark:bg-blue-900/10 dark:text-blue-400', activeColor: 'border-blue-500 bg-blue-500 text-white' },
   { key: PaymentMethod.DEBIT_CARD, label: 'Débito', icon: CreditCard, color: 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-900/40 dark:bg-purple-900/10 dark:text-purple-400', activeColor: 'border-purple-500 bg-purple-500 text-white' },
   { key: PaymentMethod.PIX, label: 'PIX', icon: QrCode, color: 'border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-900/40 dark:bg-teal-900/10 dark:text-teal-400', activeColor: 'border-teal-500 bg-teal-500 text-white' },
-  { key: PaymentMethod.VOUCHER, label: 'Vale', icon: Wallet, color: 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900/40 dark:bg-orange-900/10 dark:text-orange-400', activeColor: 'border-orange-500 bg-orange-500 text-white' },
+  { key: PaymentMethod.VOUCHER, label: 'Vale', icon: Wallet, color: 'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-900/40 dark:bg-cyan-900/10 dark:text-cyan-400', activeColor: 'border-cyan-500 bg-cyan-500 text-white' },
 ]
 
 interface SplitEntry {
@@ -102,13 +102,13 @@ function PDVContent() {
     <div className="flex flex-col items-center justify-center py-20 text-slate-400">
       <Receipt className="mb-3 h-14 w-14 opacity-30" />
       <p className="font-medium text-slate-500">Selecione um pedido para fechar</p>
-      <Button onClick={() => router.push('/pedidos')} className="mt-4 gap-2 bg-orange-500 hover:bg-orange-600">
+      <Button onClick={() => router.push('/pedidos')} className="mt-4 gap-2 bg-cyan-500 hover:bg-cyan-600">
         Ver Pedidos
       </Button>
     </div>
   )
 
-  if (isLoading) return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-orange-500" /></div>
+  if (isLoading) return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-cyan-500" /></div>
 
   if (success) return (
     <div className="flex flex-col items-center justify-center py-20">
@@ -168,7 +168,7 @@ function PDVContent() {
           )}
           <div className="flex justify-between border-t border-slate-100 pt-2 font-bold text-slate-900 dark:border-slate-800 dark:text-white">
             <span>Total</span>
-            <span className="text-xl text-orange-600">{formatCurrency(order?.total ?? 0)}</span>
+            <span className="text-xl text-cyan-600">{formatCurrency(order?.total ?? 0)}</span>
           </div>
         </div>
       </div>
@@ -183,7 +183,7 @@ function PDVContent() {
                 {splits.length > 1 ? `Dividido em ${splits.length} partes` : 'Pagamento único'}
               </p>
             </div>
-            <Button variant="outline" size="sm" onClick={addSplit} className="gap-1.5 border-orange-200 text-orange-600 hover:bg-orange-50">
+            <Button variant="outline" size="sm" onClick={addSplit} className="gap-1.5 border-cyan-200 text-cyan-600 hover:bg-cyan-50">
               <Split className="h-3.5 w-3.5" /> Dividir
             </Button>
           </div>
@@ -239,7 +239,7 @@ function PDVContent() {
                       className="pl-9 text-right font-mono text-base font-bold"
                     />
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => fillRemaining(split.id)} className="text-xs border-orange-200 text-orange-600 hover:bg-orange-50 px-3">
+                  <Button variant="outline" size="sm" onClick={() => fillRemaining(split.id)} className="text-xs border-cyan-200 text-cyan-600 hover:bg-cyan-50 px-3">
                     Saldo
                   </Button>
                 </div>
@@ -298,7 +298,7 @@ function PDVContent() {
 
           <Button
             size="lg"
-            className="w-full gap-2 bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/25"
+            className="w-full gap-2 text-white shadow-lg hover:opacity-90" style={{ background: 'linear-gradient(135deg, #22D3EE 0%, #3B82F6 50%, #8B5CF6 100%)', boxShadow: '0 8px 24px rgba(6,182,212,0.25)' }}
             disabled={remaining > 0 || confirmPayment.isPending || splits.every((s) => !parseFloat(s.amount.replace(',', '.')))}
             onClick={() => confirmPayment.mutate()}
           >
@@ -317,7 +317,7 @@ function PDVContent() {
 
 export default function PDVPage() {
   return (
-    <Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-orange-500" /></div>}>
+    <Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-cyan-500" /></div>}>
       <PDVContent />
     </Suspense>
   )

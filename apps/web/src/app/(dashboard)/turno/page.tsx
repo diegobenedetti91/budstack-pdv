@@ -21,7 +21,7 @@ const methodLabels: Record<string, { label: string; icon: typeof Banknote; color
   CREDIT_CARD: { label: 'Crédito', icon: CreditCard, color: 'text-blue-500' },
   DEBIT_CARD: { label: 'Débito', icon: CreditCard, color: 'text-purple-500' },
   PIX: { label: 'PIX', icon: QrCode, color: 'text-teal-500' },
-  VOUCHER: { label: 'Vale', icon: DollarSign, color: 'text-orange-500' },
+  VOUCHER: { label: 'Vale', icon: DollarSign, color: 'text-cyan-500' },
 }
 
 function OpenShiftModal({ onClose }: { onClose: () => void }) {
@@ -195,7 +195,7 @@ export default function TurnoPage() {
       </div>
 
       {loadingCurrent ? (
-        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-orange-500" /></div>
+        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-cyan-500" /></div>
       ) : current ? (
         <>
           {/* Status do turno atual */}
@@ -231,8 +231,8 @@ export default function TurnoPage() {
             <Card className="border-0 shadow-sm">
               <CardContent className="p-5">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-900/30">
-                    <Banknote className="h-5 w-5 text-orange-500" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-100 dark:bg-cyan-900/30">
+                    <Banknote className="h-5 w-5 text-cyan-500" />
                   </div>
                   <div>
                     <p className="text-xs font-medium text-slate-500">Saldo abertura</p>
@@ -263,7 +263,7 @@ export default function TurnoPage() {
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <ReceiptText className="h-4 w-4 text-orange-500" /> Resumo de Pedidos
+                  <ReceiptText className="h-4 w-4 text-cyan-500" /> Resumo de Pedidos
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -277,7 +277,7 @@ export default function TurnoPage() {
                 </div>
                 <div className="flex justify-between rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/50">
                   <span className="text-sm text-slate-500">Saldo esperado em caixa</span>
-                  <span className="font-semibold text-orange-600">{formatCurrency(summary?.summary?.expectedBalance ?? current.openingBalance)}</span>
+                  <span className="font-semibold text-cyan-600">{formatCurrency(summary?.summary?.expectedBalance ?? current.openingBalance)}</span>
                 </div>
                 <p className="text-xs text-slate-400">Aberto em {new Date(current.openedAt).toLocaleString('pt-BR')}</p>
               </CardContent>
@@ -287,7 +287,7 @@ export default function TurnoPage() {
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <CreditCard className="h-4 w-4 text-orange-500" /> Vendas por Forma de Pagamento
+                  <CreditCard className="h-4 w-4 text-cyan-500" /> Vendas por Forma de Pagamento
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -335,7 +335,7 @@ export default function TurnoPage() {
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
-              <CalendarClock className="h-4 w-4 text-orange-500" /> Histórico de Turnos
+              <CalendarClock className="h-4 w-4 text-cyan-500" /> Histórico de Turnos
             </CardTitle>
           </CardHeader>
           <CardContent>

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common'
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, ParseArrayPipe } from '@nestjs/common'
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger'
 import { OrdersService } from './orders.service'
 import { CreateOrderDto } from './dto/create-order.dto'
@@ -17,9 +17,13 @@ export class OrdersController {
 
   @Get()
   @ApiOperation({ summary: 'Listar pedidos' })
-  @ApiQuery({ name: 'status', enum: OrderStatus, required: false })
-  findAll(@TenantId() tenantId: string, @Query('status') status?: OrderStatus) {
-    return this.ordersService.findAll(tenantId, status)
+  @ApiQuery({ name: 'status', enum: OrderStatus, required: false, isArray: true })
+  findAll(
+    @TenantId() tenantId: string,
+    @Query('status', new ParseArrayPipe({ items: String, separator: ',', optional: true })) status?: OrderStatus[],
+  ) {
+    const normalized = status?.length === 1 ? status[0] : status
+    return this.ordersService.findAll(tenantId, normalized as any)
   }
 
   @Get('table/:tableId/open')

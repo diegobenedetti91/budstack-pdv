@@ -16,7 +16,7 @@ const paymentLabels: Record<string, { label: string; icon: typeof Banknote; colo
   CREDIT_CARD: { label: 'Crédito',   icon: CreditCard,  color: 'bg-blue-500'   },
   DEBIT_CARD:  { label: 'Débito',    icon: CreditCard,  color: 'bg-purple-500' },
   PIX:         { label: 'PIX',       icon: QrCode,      color: 'bg-teal-500'   },
-  VOUCHER:     { label: 'Vale',      icon: DollarSign,  color: 'bg-orange-500' },
+  VOUCHER:     { label: 'Vale',      icon: DollarSign,  color: 'bg-cyan-500'   },
   OTHER:       { label: 'Outros',    icon: DollarSign,  color: 'bg-slate-400'  },
 }
 
@@ -52,7 +52,7 @@ function MiniBarChart({ data, maxValue }: { data: { label: string; value: number
               initial={{ height: 0 }}
               animate={{ height: `${height}%` }}
               transition={{ duration: 0.5, delay: i * 0.05 }}
-              className="w-full min-h-[2px] rounded-t-sm bg-orange-400 group-hover:bg-orange-500"
+              className="w-full min-h-[2px] rounded-t-sm bg-cyan-400 group-hover:bg-cyan-500"
             />
             <span className="text-[9px] text-slate-400 truncate w-full text-center">{item.label}</span>
           </div>
@@ -110,7 +110,7 @@ export default function RelatoriosPage() {
             <button
               key={p.key}
               onClick={() => setPeriod(p.key)}
-              className={cn('rounded-lg px-4 py-1.5 text-sm font-medium transition-colors', period === p.key ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white')}
+              className={cn('rounded-lg px-4 py-1.5 text-sm font-medium transition-colors', period === p.key ? 'bg-cyan-500 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white')}
             >
               {p.label}
             </button>
@@ -120,7 +120,7 @@ export default function RelatoriosPage() {
 
       {isLoading ? (
         <div className="flex h-64 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
         </div>
       ) : (
         <>
@@ -151,7 +151,7 @@ export default function RelatoriosPage() {
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <BarChart3 className="h-4 w-4 text-orange-500" /> Receita por Hora
+                  <BarChart3 className="h-4 w-4 text-cyan-500" /> Receita por Hora
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -164,7 +164,7 @@ export default function RelatoriosPage() {
               <Card className="border-0 shadow-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2 text-base">
-                    <TrendingUp className="h-4 w-4 text-orange-500" /> Receita Diária
+                    <TrendingUp className="h-4 w-4 text-cyan-500" /> Receita Diária
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -177,7 +177,7 @@ export default function RelatoriosPage() {
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <CreditCard className="h-4 w-4 text-orange-500" /> Formas de Pagamento
+                  <CreditCard className="h-4 w-4 text-cyan-500" /> Formas de Pagamento
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -218,7 +218,7 @@ export default function RelatoriosPage() {
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <ChefHat className="h-4 w-4 text-orange-500" /> Produtos Mais Vendidos
+                  <ChefHat className="h-4 w-4 text-cyan-500" /> Produtos Mais Vendidos
                 </CardTitle>
               </CardHeader>
               <CardContent>

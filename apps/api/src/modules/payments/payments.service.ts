@@ -1,16 +1,18 @@
 import { Injectable, BadRequestException } from '@nestjs/common'
+import { IsEnum, IsNumber, IsOptional, Min } from 'class-validator'
 import { PrismaService } from '../prisma/prisma.service'
+import { KitchenGateway } from '../kitchen/kitchen.gateway'
 import { PaymentMethod } from '@budstack/types'
 
 export class CreatePaymentDto {
-  method: PaymentMethod
-  amount: number
-  cashReceived?: number
+  @IsEnum(PaymentMethod) method: PaymentMethod
+  @IsNumber() @Min(0) amount: number
+  @IsOptional() @IsNumber() @Min(0) cashReceived?: number
 }
 
 @Injectable()
 export class PaymentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private kitchen: KitchenGateway) {}
 
   async addPayment(tenantId: string, orderId: string, dto: CreatePaymentDto) {
     const order = await this.prisma.order.findFirst({
@@ -56,6 +58,10 @@ export class PaymentsService {
         await this.prisma.table.update({
           where: { id: order.tableId },
           data: { status: 'AVAILABLE' },
+        })
+        this.kitchen.emitTableStatus(order.tenantId, {
+          tableId: order.tableId,
+          status: 'AVAILABLE',
         })
       }
     }

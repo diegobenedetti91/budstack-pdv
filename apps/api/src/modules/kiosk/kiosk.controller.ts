@@ -21,13 +21,28 @@ export class KioskController {
     return this.kioskService.getMenu(slug)
   }
 
+  @Get(':slug/tables')
+  @ApiOperation({ summary: 'Lista de mesas disponíveis para o totem' })
+  getTables(@Param('slug') slug: string) {
+    return this.kioskService.getTables(slug)
+  }
+
+  @Get(':slug/tables/:tableId/order')
+  @ApiOperation({ summary: 'Pedido em aberto da mesa (para retomar sessão)' })
+  getTableCurrentOrder(
+    @Param('slug') slug: string,
+    @Param('tableId') tableId: string,
+  ) {
+    return this.kioskService.getTableCurrentOrder(slug, tableId)
+  }
+
   @Post(':slug/orders')
   @ApiOperation({ summary: 'Criar pedido pelo totem' })
   createOrder(
     @Param('slug') slug: string,
-    @Body() body: { customerName?: string },
+    @Body() body: { customerName?: string; customerPhone?: string; tableId?: string },
   ) {
-    return this.kioskService.createOrder(slug, body.customerName)
+    return this.kioskService.createOrder(slug, body.customerName, body.customerPhone, body.tableId)
   }
 
   @Post(':slug/orders/:orderId/items')
@@ -48,6 +63,15 @@ export class KioskController {
     @Body() body: { method: string; amount: number },
   ) {
     return this.kioskService.addPayment(slug, orderId, body.method, body.amount)
+  }
+
+  @Post(':slug/orders/:orderId/request-bill')
+  @ApiOperation({ summary: 'Solicitar conta pelo totem (notifica garçom)' })
+  requestBill(
+    @Param('slug') slug: string,
+    @Param('orderId') orderId: string,
+  ) {
+    return this.kioskService.requestBill(slug, orderId)
   }
 
   @Get(':slug/orders/:orderId')

@@ -43,6 +43,10 @@ export class KitchenGateway implements OnGatewayConnection, OnGatewayDisconnect 
     this.server.to(`tenant:${tenantId}`).emit(WsEvent.TABLE_STATUS, payload)
   }
 
+  emitBillRequested(tenantId: string, payload: any) {
+    this.server.to(`tenant:${tenantId}`).emit(WsEvent.BILL_REQUESTED, payload)
+  }
+
   @SubscribeMessage('join_tenant')
   handleJoinTenant(@MessageBody() tenantId: string, @ConnectedSocket() client: Socket) {
     client.join(`tenant:${tenantId}`)

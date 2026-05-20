@@ -28,7 +28,7 @@ const typeConfig: Record<PrinterType, { label: string; icon: typeof Wifi }> = {
 }
 
 const destConfig: Record<PrinterDestination, { label: string; color: string }> = {
-  KITCHEN: { label: 'Cozinha', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
+  KITCHEN: { label: 'Cozinha', color: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400' },
   BAR: { label: 'Bar', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
   CASHIER: { label: 'Caixa', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
   BOTH: { label: 'Cozinha + Bar', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
@@ -129,7 +129,7 @@ function PrinterModal({ onClose, editing }: { onClose: () => void; editing?: Pri
           )}
 
           <div className="flex items-center gap-2 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
-            <input type="checkbox" id="isDefault" {...register('isDefault')} className="h-4 w-4 rounded accent-orange-500" />
+            <input type="checkbox" id="isDefault" {...register('isDefault')} className="h-4 w-4 rounded accent-cyan-500" />
             <label htmlFor="isDefault" className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Definir como impressora padrão
             </label>
@@ -137,7 +137,7 @@ function PrinterModal({ onClose, editing }: { onClose: () => void; editing?: Pri
 
           <div className="flex gap-2 pt-2">
             <Button type="button" variant="outline" className="flex-1" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting} className="flex-1 bg-orange-500 hover:bg-orange-600">
+            <Button type="submit" disabled={isSubmitting} className="flex-1 bg-cyan-500 hover:bg-cyan-600">
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               Salvar
             </Button>
@@ -170,7 +170,7 @@ export default function ImpressorasPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Impressoras</h1>
           <p className="text-sm text-slate-500">Impressoras térmicas ESC/POS cadastradas</p>
         </div>
-        <Button onClick={() => setModal({ open: true })} className="gap-2 bg-orange-500 hover:bg-orange-600 shadow-sm shadow-orange-500/25">
+        <Button onClick={() => setModal({ open: true })} className="gap-2 bg-cyan-500 hover:bg-cyan-600 shadow-sm shadow-cyan-500/25">
           <Plus className="h-4 w-4" /> Adicionar Impressora
         </Button>
       </div>
@@ -182,13 +182,13 @@ export default function ImpressorasPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-orange-500" /></div>
+        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-cyan-500" /></div>
       ) : printers.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 py-16 text-slate-300 dark:border-slate-700">
           <Printer className="mb-3 h-12 w-12" />
           <p className="text-slate-400 font-medium">Nenhuma impressora cadastrada</p>
           <p className="text-sm">Adicione uma impressora ESC/POS para imprimir comandas</p>
-          <Button onClick={() => setModal({ open: true })} className="mt-4 gap-2 bg-orange-500 hover:bg-orange-600">
+          <Button onClick={() => setModal({ open: true })} className="mt-4 gap-2 bg-cyan-500 hover:bg-cyan-600">
             <Plus className="h-4 w-4" /> Adicionar Impressora
           </Button>
         </div>
@@ -211,7 +211,7 @@ export default function ImpressorasPage() {
                 )}
               >
                 {printer.isDefault && (
-                  <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
+                  <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-bold text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400">
                     <Star className="h-2.5 w-2.5 fill-current" /> Padrão
                   </div>
                 )}

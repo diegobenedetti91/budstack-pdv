@@ -23,8 +23,9 @@ import { formatCurrency, cn } from '@/lib/utils'
 interface Category { id: string; name: string; icon?: string; _count?: { products: number } }
 interface Product {
   id: string; categoryId: string; name: string; description?: string
-  price: number; imageUrl?: string; code?: string; isActive: boolean; isAvailable: boolean
-  category?: Category
+  price: number; costPrice?: number; imageUrl?: string; code?: string
+  isActive: boolean; isAvailable: boolean; category?: Category
+  stockControl: boolean; stockQuantity: number; stockMinimum: number
 }
 
 const productSchema = z.object({
@@ -32,8 +33,12 @@ const productSchema = z.object({
   name: z.string().min(1, 'Informe o nome'),
   description: z.string().optional(),
   price: z.coerce.number().positive('Preço deve ser positivo'),
+  costPrice: z.coerce.number().min(0).optional().or(z.literal('')),
   imageUrl: z.string().url('URL inválida').optional().or(z.literal('')),
   code: z.string().optional(),
+  stockControl: z.boolean().default(false),
+  stockQuantity: z.coerce.number().int().min(0).default(0),
+  stockMinimum: z.coerce.number().int().min(0).default(0),
 })
 
 const categorySchema = z.object({
@@ -83,7 +88,7 @@ function CategoryModal({ onClose, editing }: { onClose: () => void; editing?: Ca
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="outline" className="flex-1" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting} className="flex-1 bg-orange-500 hover:bg-orange-600">
+            <Button type="submit" disabled={isSubmitting} className="flex-1 bg-cyan-500 hover:bg-cyan-600">
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               Salvar
             </Button>
@@ -104,16 +109,27 @@ function ProductModal({ onClose, editing, categories }: { onClose: () => void; e
       name: editing.name,
       description: editing.description ?? '',
       price: editing.price,
+      costPrice: editing.costPrice ?? '',
       imageUrl: editing.imageUrl ?? '',
       code: editing.code ?? '',
-    } : {},
+      stockControl: editing.stockControl,
+      stockQuantity: editing.stockQuantity,
+      stockMinimum: editing.stockMinimum,
+    } : { stockControl: false, stockQuantity: 0, stockMinimum: 0 },
   })
+
+  const stockControl = watch('stockControl')
 
   const imageUrl = watch('imageUrl')
 
   const save = async (data: ProductForm) => {
     try {
-      const payload = { ...data, imageUrl: data.imageUrl || undefined, code: data.code || undefined }
+      const payload = {
+        ...data,
+        imageUrl: data.imageUrl || undefined,
+        code: data.code || undefined,
+        costPrice: data.costPrice === '' ? undefined : data.costPrice,
+      }
       if (editing) await api.patch(`/products/${editing.id}`, payload)
       else await api.post('/products', payload)
       qc.invalidateQueries({ queryKey: ['products'] })
@@ -189,11 +205,51 @@ function ProductModal({ onClose, editing, categories }: { onClose: () => void; e
               <Label>Código PDV</Label>
               <Input {...register('code')} placeholder="001" />
             </div>
+
+            <div className="space-y-1.5">
+              <Label>Valor Custo (R$)</Label>
+              <Input {...register('costPrice')} type="number" step="0.01" placeholder="0,00" />
+            </div>
+          </div>
+
+          {/* Estoque */}
+          <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">Controle de Estoque</p>
+                <p className="text-xs text-slate-400">Ativar para monitorar quantidade disponível</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={stockControl}
+                onClick={() => setValue('stockControl', !stockControl)}
+                className={cn(
+                  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                  stockControl ? 'bg-cyan-500' : 'bg-slate-200 dark:bg-slate-700',
+                )}
+              >
+                <span className={cn('inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform', stockControl ? 'translate-x-6' : 'translate-x-1')} />
+              </button>
+            </div>
+            {stockControl && (
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className="space-y-1.5">
+                  <Label>Quantidade em Estoque</Label>
+                  <Input {...register('stockQuantity')} type="number" min="0" placeholder="0" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Estoque Mínimo</Label>
+                  <Input {...register('stockMinimum')} type="number" min="0" placeholder="0" />
+                  <p className="text-xs text-slate-400">Alerta quando atingir</p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2 pt-2">
             <Button type="button" variant="outline" className="flex-1" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting} className="flex-1 bg-orange-500 hover:bg-orange-600">
+            <Button type="submit" disabled={isSubmitting} className="flex-1 bg-cyan-500 hover:bg-cyan-600">
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               Salvar
             </Button>
@@ -256,7 +312,7 @@ export default function CardapioPage() {
           <Button variant="outline" onClick={() => setCatModal({ open: true })} className="gap-2">
             <Tag className="h-4 w-4" /> Nova Categoria
           </Button>
-          <Button onClick={() => setProdModal({ open: true })} className="gap-2 bg-orange-500 hover:bg-orange-600 shadow-sm shadow-orange-500/25">
+          <Button onClick={() => setProdModal({ open: true })} className="gap-2 bg-cyan-500 hover:bg-cyan-600 shadow-sm shadow-cyan-500/25">
             <Plus className="h-4 w-4" /> Novo Produto
           </Button>
         </div>
@@ -268,7 +324,7 @@ export default function CardapioPage() {
           <button
             key={t.key}
             onClick={() => setView(t.key as any)}
-            className={cn('rounded-lg px-4 py-2 text-sm font-medium transition-colors', view === t.key ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white')}
+            className={cn('rounded-lg px-4 py-2 text-sm font-medium transition-colors', view === t.key ? 'bg-cyan-500 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white')}
           >
             {t.label}
           </button>
@@ -286,13 +342,13 @@ export default function CardapioPage() {
             <div className="flex flex-wrap gap-1.5">
               <button
                 onClick={() => setFilterCat(null)}
-                className={cn('rounded-xl px-3 py-1.5 text-xs font-medium transition-colors', !filterCat ? 'bg-orange-500 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:border-orange-200 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300')}
+                className={cn('rounded-xl px-3 py-1.5 text-xs font-medium transition-colors', !filterCat ? 'bg-cyan-500 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:border-cyan-200 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300')}
               >Todas</button>
               {categories.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => setFilterCat(c.id === filterCat ? null : c.id)}
-                  className={cn('flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-medium transition-colors', c.id === filterCat ? 'bg-orange-500 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:border-orange-200 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300')}
+                  className={cn('flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-medium transition-colors', c.id === filterCat ? 'bg-cyan-500 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:border-cyan-200 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300')}
                 >
                   {c.icon && <span>{c.icon}</span>} {c.name}
                 </button>
@@ -309,15 +365,17 @@ export default function CardapioPage() {
                     <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-400">Produto</th>
                     <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-400">Categoria</th>
                     <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-400">Preço</th>
+                    <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-400">Custo</th>
+                    <th className="px-4 py-3 text-center font-semibold text-slate-600 dark:text-slate-400">Estoque</th>
                     <th className="px-4 py-3 text-center font-semibold text-slate-600 dark:text-slate-400">Status</th>
                     <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-400">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                   {isLoading ? (
-                    <tr><td colSpan={5} className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin text-orange-500" /></td></tr>
+                    <tr><td colSpan={7} className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin text-cyan-500" /></td></tr>
                   ) : filtered.length === 0 ? (
-                    <tr><td colSpan={5} className="py-12 text-center text-slate-400">Nenhum produto encontrado</td></tr>
+                    <tr><td colSpan={7} className="py-12 text-center text-slate-400">Nenhum produto encontrado</td></tr>
                   ) : filtered.map((product, i) => (
                     <motion.tr
                       key={product.id}
@@ -350,6 +408,23 @@ export default function CardapioPage() {
                       </td>
                       <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-white">
                         {formatCurrency(product.price)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-500 dark:text-slate-400">
+                        {product.costPrice ? formatCurrency(product.costPrice) : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {product.stockControl ? (
+                          <span className={cn(
+                            'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold',
+                            product.stockQuantity <= product.stockMinimum
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+                          )}>
+                            {product.stockQuantity} un.
+                          </span>
+                        ) : (
+                          <span className="text-slate-300 dark:text-slate-600 text-xs">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <button onClick={() => toggleAvail.mutate(product.id)} className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors">
@@ -394,7 +469,7 @@ export default function CardapioPage() {
               className="group rounded-2xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
             >
               <div className="mb-3 flex items-center justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-xl dark:bg-orange-900/20">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-50 text-xl dark:bg-cyan-900/20">
                   {cat.icon ?? '🍽️'}
                 </div>
                 <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
@@ -415,7 +490,7 @@ export default function CardapioPage() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setCatModal({ open: true })}
-            className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 p-6 text-slate-400 transition-colors hover:border-orange-300 hover:text-orange-500 dark:border-slate-700"
+            className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 p-6 text-slate-400 transition-colors hover:border-cyan-300 hover:text-cyan-500 dark:border-slate-700"
           >
             <Plus className="h-7 w-7" />
             <span className="text-sm font-medium">Nova Categoria</span>

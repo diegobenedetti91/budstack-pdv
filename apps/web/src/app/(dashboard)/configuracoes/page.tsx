@@ -82,7 +82,7 @@ export default function ConfiguracoesPage() {
 
   if (isLoading) return (
     <div className="flex h-64 items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+      <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
     </div>
   )
 
@@ -221,7 +221,7 @@ export default function ConfiguracoesPage() {
         </Tabs>
 
         <div className="mt-6 flex justify-end">
-          <Button type="submit" disabled={mutation.isPending} size="lg" className="gap-2 bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/25">
+          <Button type="submit" disabled={mutation.isPending} size="lg" className="gap-2 text-white shadow-lg hover:opacity-90" style={{ background: 'linear-gradient(135deg, #22D3EE 0%, #3B82F6 50%, #8B5CF6 100%)', boxShadow: '0 8px 24px rgba(6,182,212,0.25)' }}>
             {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
             {saved ? 'Salvo!' : 'Salvar Configurações'}
           </Button>

@@ -27,7 +27,7 @@ const roleConfig: Record<UserRole, { label: string; color: string; bg: string }>
   ADMIN: { label: 'Administrador', color: 'text-purple-700 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' },
   MANAGER: { label: 'Gerente', color: 'text-blue-700 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
   CASHIER: { label: 'Caixa', color: 'text-teal-700 dark:text-teal-400', bg: 'bg-teal-100 dark:bg-teal-900/30' },
-  WAITER: { label: 'Garçom', color: 'text-orange-700 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30' },
+  WAITER: { label: 'Garçom', color: 'text-cyan-700 dark:text-cyan-400', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
   KITCHEN: { label: 'Cozinha', color: 'text-yellow-700 dark:text-yellow-400', bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
 }
 
@@ -105,7 +105,7 @@ function UserModal({ onClose, editing }: { onClose: () => void; editing?: User }
           </div>
           <div className="flex gap-2 pt-2">
             <Button type="button" variant="outline" className="flex-1" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting} className="flex-1 bg-orange-500 hover:bg-orange-600">
+            <Button type="submit" disabled={isSubmitting} className="flex-1 bg-cyan-500 hover:bg-cyan-600">
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               Salvar
             </Button>
@@ -149,7 +149,7 @@ export default function UsuariosPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Usuários</h1>
           <p className="text-sm text-slate-500">{users.length} usuário(s) cadastrado(s)</p>
         </div>
-        <Button onClick={() => setModal({ open: true })} className="gap-2 bg-orange-500 hover:bg-orange-600 shadow-sm shadow-orange-500/25">
+        <Button onClick={() => setModal({ open: true })} className="gap-2 bg-cyan-500 hover:bg-cyan-600 shadow-sm shadow-cyan-500/25">
           <Plus className="h-4 w-4" /> Novo Usuário
         </Button>
       </div>
@@ -169,7 +169,7 @@ export default function UsuariosPage() {
 
       {/* Users list */}
       {isLoading ? (
-        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-orange-500" /></div>
+        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-cyan-500" /></div>
       ) : (
         <div className="space-y-5">
           {grouped.length === 0 ? (
@@ -195,7 +195,7 @@ export default function UsuariosPage() {
                     )}
                   >
                     {/* Avatar */}
-                    <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white', user.isActive ? 'bg-orange-500' : 'bg-slate-400')}>
+                    <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white', user.isActive ? 'bg-cyan-500' : 'bg-slate-400')}>
                       {initials(user.name)}
                     </div>
 

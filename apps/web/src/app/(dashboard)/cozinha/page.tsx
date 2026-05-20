@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Clock, ChefHat, Bell, CheckCircle2, Play, Loader2, Wifi, WifiOff } from 'lucide-react'
+import { Clock, ChefHat, CheckCircle2, Play, Loader2, Truck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
 import { useToast } from '@/components/ui/use-toast'
@@ -16,6 +16,7 @@ interface KitchenItem {
   orderId: string
   orderNumber: number
   tableNumber?: number
+  customerName?: string
   productName: string
   quantity: number
   notes?: string
@@ -46,10 +47,10 @@ const statusConfig = {
     label: 'Pronto para servir',
     bg: 'border-green-200 bg-green-50 dark:border-green-900/40 dark:bg-green-900/10',
     badge: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    nextStatus: null,
-    nextLabel: null,
-    nextIcon: null,
-    nextColor: '',
+    nextStatus: 'DELIVERED' as OrderItemStatus,
+    nextLabel: 'Entregue',
+    nextIcon: Truck,
+    nextColor: 'bg-slate-600 hover:bg-slate-700',
   },
 }
 
@@ -80,13 +81,12 @@ function ElapsedTimer({ date }: { date: string }) {
 export default function CozinhaPage() {
   const { toast } = useToast()
   const qc = useQueryClient()
-  const [wsConnected, setWsConnected] = useState(false)
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'IN_PRODUCTION' | 'READY'>('ALL')
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['kitchen-orders'],
-    queryFn: () => api.get('/orders?status=OPEN').then((r) => r.data),
-    refetchInterval: 30000,
+    queryFn: () => api.get('/orders?status=OPEN,IN_PROGRESS').then((r) => r.data),
+    refetchInterval: 3000,
   })
 
   // Flatten all items from open orders
@@ -98,6 +98,7 @@ export default function CozinhaPage() {
         orderId: order.id,
         orderNumber: order.orderNumber,
         tableNumber: order.table?.number,
+        customerName: order.customerName,
         productName: item.product?.name ?? 'Produto',
         quantity: item.quantity,
         notes: item.notes,
@@ -110,11 +111,10 @@ export default function CozinhaPage() {
   const sorted = [...filtered].sort((a, b) => new Date(a.sentToKitchenAt).getTime() - new Date(b.sentToKitchenAt).getTime())
 
   // WebSocket para novos pedidos em tempo real
-  useKitchenSocket({
+  const { connected: wsConnected } = useKitchenSocket({
     [WsEvent.ORDER_CREATED]: (payload) => {
       qc.invalidateQueries({ queryKey: ['kitchen-orders'] })
-      toast({ title: `🔔 Novo pedido! Mesa ${payload.order?.table?.number ?? '—'}` })
-      // Toca som se disponível
+      toast({ title: `Novo pedido #${payload.orderNumber ?? ''}` })
       try { new Audio('/sounds/bell.mp3').play() } catch {}
     },
     [WsEvent.ORDER_ITEM_STATUS]: () => {
@@ -141,7 +141,7 @@ export default function CozinhaPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 shadow-sm shadow-orange-500/30">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl shadow-sm" style={{ background: 'linear-gradient(135deg, #22D3EE 0%, #3B82F6 50%, #8B5CF6 100%)', boxShadow: '0 2px 8px rgba(6,182,212,0.3)' }}>
             <ChefHat className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -182,7 +182,7 @@ export default function CozinhaPage() {
       {/* Items grid */}
       {isLoading ? (
         <div className="flex h-40 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
         </div>
       ) : sorted.length === 0 ? (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-16 text-slate-300">
@@ -207,15 +207,27 @@ export default function CozinhaPage() {
                   {/* Order info */}
                   <div className="mb-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900/10 dark:bg-white/10">
-                        <span className="text-sm font-bold text-slate-900 dark:text-white">
-                          {item.tableNumber ?? '—'}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-slate-500">Mesa</p>
-                        <p className="text-[10px] text-slate-400">#{item.orderNumber}</p>
-                      </div>
+                      {item.tableNumber ? (
+                        <>
+                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900/10 dark:bg-white/10">
+                            <span className="text-sm font-bold text-slate-900 dark:text-white">{item.tableNumber}</span>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-slate-500">Mesa</p>
+                            <p className="text-[10px] text-slate-400">#{item.orderNumber}</p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-500/10">
+                            <span className="text-xs font-bold text-purple-600">🛍</span>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-purple-600">Retirada</p>
+                            <p className="text-[10px] text-slate-400 truncate max-w-[80px]">{item.customerName ?? `#${item.orderNumber}`}</p>
+                          </div>
+                        </>
+                      )}
                     </div>
                     <ElapsedTimer date={item.sentToKitchenAt} />
                   </div>

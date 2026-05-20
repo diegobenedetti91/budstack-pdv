@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -214,12 +215,17 @@ model Product {
 
   name        String
   description String?
-  price       Decimal @db.Decimal(10, 2)
+  price       Decimal  @db.Decimal(10, 2)
+  costPrice   Decimal? @db.Decimal(10, 2)
   imageUrl    String?
   code        String?
-  isActive    Boolean @default(true)
-  isAvailable Boolean @default(true)
+  isActive    Boolean  @default(true)
+  isAvailable Boolean  @default(true)
   printerId   String?
+
+  stockControl  Boolean @default(false)
+  stockQuantity Int     @default(0)
+  stockMinimum  Int     @default(0)
 
   variations ProductVariation[]
   orderItems OrderItem[]
@@ -258,6 +264,7 @@ model Order {
   type          OrderType   @default(TABLE)
   status        OrderStatus @default(OPEN)
   customerName  String?
+  customerPhone String?
   customerCount Int?        @default(1)
 
   subtotal      Decimal @db.Decimal(10, 2) @default(0)
@@ -270,9 +277,10 @@ model Order {
   items    OrderItem[]
   payments Payment[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  closedAt  DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  closedAt         DateTime?
+  billRequestedAt  DateTime?
 
   @@unique([orderNumber, tenantId])
   @@index([tenantId, status])

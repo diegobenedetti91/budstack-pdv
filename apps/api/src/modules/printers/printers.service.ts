@@ -1,15 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
+import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator'
 import { PrismaService } from '../prisma/prisma.service'
 import { PrinterType, PrinterDestination } from '@budstack/types'
 
 export class CreatePrinterDto {
-  name: string
-  type: PrinterType
-  ipAddress?: string
-  port?: number
-  usbPath?: string
-  destination: PrinterDestination
-  isDefault?: boolean
+  @IsString() name: string
+  @IsEnum(PrinterType) type: PrinterType
+  @IsOptional() @IsString() ipAddress?: string
+  @IsOptional() @IsInt() @Min(1) @Max(65535) port?: number
+  @IsOptional() @IsString() usbPath?: string
+  @IsEnum(PrinterDestination) destination: PrinterDestination
+  @IsOptional() @IsBoolean() isDefault?: boolean
 }
 
 @Injectable()

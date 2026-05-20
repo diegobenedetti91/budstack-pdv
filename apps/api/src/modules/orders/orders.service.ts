@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { KitchenGateway } from '../kitchen/kitchen.gateway'
+import { WhatsappService } from '../whatsapp/whatsapp.service'
+import { PrintService } from '../printers/print.service'
 import { CreateOrderDto } from './dto/create-order.dto'
 import { AddItemDto } from './dto/add-item.dto'
 import { OrderStatus, OrderItemStatus } from '@budstack/types'
@@ -10,11 +12,17 @@ export class OrdersService {
   constructor(
     private prisma: PrismaService,
     private kitchen: KitchenGateway,
+    private whatsapp: WhatsappService,
+    private print: PrintService,
   ) {}
 
-  async findAll(tenantId: string, status?: OrderStatus) {
+  async findAll(tenantId: string, status?: OrderStatus | OrderStatus[]) {
+    let statusFilter: any = undefined
+    if (status) {
+      statusFilter = Array.isArray(status) ? { in: status } : status
+    }
     return this.prisma.order.findMany({
-      where: { tenantId, ...(status && { status }) },
+      where: { tenantId, ...(statusFilter && { status: statusFilter }) },
       include: {
         table: true,
         user: { select: { id: true, name: true } },
@@ -118,7 +126,7 @@ export class OrdersService {
       await this.prisma.order.update({ where: { id: orderId }, data: { status: 'IN_PROGRESS' } })
     }
 
-    // Emite para cozinha
+    // Emite para cozinha via WebSocket
     this.kitchen.emitNewOrder(tenantId, {
       orderId,
       orderNumber: order.orderNumber,
@@ -133,17 +141,46 @@ export class OrdersService {
       },
     })
 
+    // Imprime na(s) impressora(s) de cozinha (fire-and-forget — nunca bloqueia)
+    this.print.printKitchenTicket(tenantId, {
+      orderNumber: order.orderNumber,
+      tableNumber: order.table?.number ?? null,
+      customerName: (order as any).customerName ?? null,
+      productName: item.product.name,
+      quantity: item.quantity,
+      notes: item.notes ?? null,
+      sentAt: new Date(),
+    }).catch(() => { /* erros já logados no PrintService */ })
+
     return item
   }
 
   async updateItemStatus(tenantId: string, orderId: string, itemId: string, status: OrderItemStatus) {
-    await this.findOne(tenantId, orderId)
+    const order = await this.findOne(tenantId, orderId)
     const item = await this.prisma.orderItem.update({
       where: { id: itemId },
       data: { status, ...(status === 'READY' && { readyAt: new Date() }) },
+      include: { product: { select: { name: true } } },
     })
 
-    this.kitchen.emitOrderItemStatus(tenantId, { orderId, itemId, status })
+    this.kitchen.emitOrderItemStatus(tenantId, {
+      orderId,
+      itemId,
+      status,
+      orderNumber: order.orderNumber,
+      tableNumber: order.table?.number ?? null,
+      tableId: order.tableId ?? null,
+      itemName: item.product.name,
+    })
+
+    // WhatsApp para retirada: notifica quando o pedido fica pronto
+    if (status === 'READY' && !order.tableId && (order as any).customerPhone) {
+      this.whatsapp.sendReadyNotification(
+        (order as any).customerPhone,
+        (order as any).customerName ?? 'Cliente',
+        order.orderNumber,
+      )
+    }
 
     return item
   }

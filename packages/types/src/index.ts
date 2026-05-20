@@ -308,6 +308,9 @@ export enum WsEvent {
   // Mesas
   TABLE_STATUS = 'table:status',
 
+  // Conta (kiosk → garçom)
+  BILL_REQUESTED = 'bill:requested',
+
   // Impressão
   PRINT_JOB = 'print:job',
   PRINT_OFFLINE = 'print:offline',
@@ -323,6 +326,14 @@ export interface WsOrderItemStatusPayload {
   orderId: string
   itemId: string
   status: OrderItemStatus
+}
+
+export interface WsBillRequestedPayload {
+  tenantId: string
+  orderId: string
+  orderNumber: number
+  tableNumber: number | null
+  tableId: string | null
 }
 
 export interface WsPrintJobPayload {

@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
+import { IsInt, IsOptional, IsString, Min } from 'class-validator'
 import { PrismaService } from '../prisma/prisma.service'
 
 export class CreateCategoryDto {
-  name: string
-  icon?: string
-  imageUrl?: string
-  sortOrder?: number
+  @IsString() name: string
+  @IsOptional() @IsString() icon?: string
+  @IsOptional() @IsString() imageUrl?: string
+  @IsOptional() @IsInt() @Min(0) sortOrder?: number
 }
 
 @Injectable()
