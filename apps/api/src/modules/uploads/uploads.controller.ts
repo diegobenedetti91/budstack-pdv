@@ -52,17 +52,23 @@ export class UploadsController {
   @Get(':filename')
   @Public()
   async getFile(@Param('filename') filename: string, @Res() res: Response) {
-    const { createReadStream } = require('fs')
-    const uploadPath = './public/uploads'
-    const filepath = require('path').join(uploadPath, filename)
+    const fs = require('fs')
+    const path = require('path')
+    const uploadDir = path.join(__dirname, '..', '..', '..', 'public', 'uploads')
+    const filepath = path.join(uploadDir, filename)
 
     // Validar path para prevenir directory traversal
-    if (!filepath.startsWith(require('path').resolve(uploadPath))) {
+    if (!path.resolve(filepath).startsWith(path.resolve(uploadDir))) {
       return res.status(403).send('Forbidden')
     }
 
+    // Validar que o arquivo existe e é um arquivo válido
+    if (!fs.existsSync(filepath) || !fs.statSync(filepath).isFile()) {
+      return res.status(404).send('Not Found')
+    }
+
     try {
-      const stream = createReadStream(filepath)
+      const stream = fs.createReadStream(filepath)
       res.setHeader('Access-Control-Allow-Origin', '*')
       res.setHeader('Content-Type', 'image/png')
       res.setHeader('Cache-Control', 'public, max-age=31536000')
