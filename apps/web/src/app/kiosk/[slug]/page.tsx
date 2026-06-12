@@ -75,6 +75,7 @@ export default function KioskPage() {
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [selectedProductDetail, setSelectedProductDetail] = useState<any>(null)
+  const [productDetailQty, setProductDetailQty] = useState(1)
   const [appliedCoupon, setAppliedCoupon] = useState<string>('')
   const [lastOrderProducts, setLastOrderProducts] = useState<any[]>([])
 
@@ -1336,7 +1337,7 @@ export default function KioskPage() {
             key="product-detail-modal"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-            onClick={() => setSelectedProductDetail(null)}
+            onClick={() => { setSelectedProductDetail(null); setProductDetailQty(1) }}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
@@ -1378,25 +1379,46 @@ export default function KioskPage() {
                         </span>
                       )}
                     </div>
+                    <p className="text-sm text-white/50">
+                      Subtotal: {formatCurrency(selectedProductDetail.price * productDetailQty)}
+                    </p>
                   </div>
 
                   {selectedProductDetail.code && (
                     <p className="text-xs text-white/40">Código: {selectedProductDetail.code}</p>
                   )}
 
-                  <div className="flex gap-3 pt-4">
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setProductDetailQty(Math.max(1, productDetailQty - 1))}
+                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.07] transition-colors hover:bg-red-500/20 hover:text-red-400">
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <span className="flex-1 text-center text-lg font-bold">{productDetailQty}</span>
+                    <button onClick={() => setProductDetailQty(productDetailQty + 1)}
+                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.07] transition-colors hover:bg-emerald-500/20 hover:text-emerald-400">
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
                     <button
-                      onClick={() => setSelectedProductDetail(null)}
+                      onClick={() => { setSelectedProductDetail(null); setProductDetailQty(1) }}
                       className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 font-medium text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white/80"
                     >
                       Fechar
                     </button>
                     <button
-                      onClick={() => { addToCart(selectedProductDetail); setSelectedProductDetail(null) }}
+                      onClick={() => {
+                        for (let i = 0; i < productDetailQty; i++) {
+                          addToCart(selectedProductDetail)
+                        }
+                        setSelectedProductDetail(null)
+                        setProductDetailQty(1)
+                      }}
                       className="flex-1 gap-2 rounded-xl px-4 py-3 font-semibold text-white shadow-lg transition-all"
                       style={{ ...brandBg, boxShadow: brandGlow }}
                     >
-                      <Plus className="h-4 w-4 inline" /> Adicionar ao pedido
+                      <Plus className="h-4 w-4 inline" /> Adicionar {productDetailQty}× ao pedido
                     </button>
                   </div>
                 </div>
