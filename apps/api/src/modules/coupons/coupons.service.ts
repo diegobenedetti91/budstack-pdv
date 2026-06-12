@@ -111,13 +111,20 @@ export class CouponsService {
     const coupon = await this.prisma.coupon.findFirst({ where: { id, tenantId } })
     if (!coupon) throw new NotFoundException('Cupom não encontrado')
 
+    const updateData: any = {}
+    if (dto.code) updateData.code = dto.code
+    if (dto.description) updateData.description = dto.description
+    if (dto.discountType) updateData.discountType = dto.discountType
+    if (dto.discountValue !== undefined) updateData.discountValue = dto.discountValue
+    if (dto.maxUses !== undefined) updateData.maxUses = dto.maxUses
+    if (dto.minOrderValue !== undefined) updateData.minOrderValue = dto.minOrderValue
+    if (dto.maxDiscount !== undefined) updateData.maxDiscount = dto.maxDiscount
+    if (dto.validFrom) updateData.validFrom = new Date(dto.validFrom)
+    if (dto.validUntil) updateData.validUntil = new Date(dto.validUntil)
+
     return this.prisma.coupon.update({
       where: { id },
-      data: {
-        ...dto,
-        validFrom: dto.validFrom ? new Date(dto.validFrom) : undefined,
-        validUntil: dto.validUntil ? new Date(dto.validUntil) : undefined,
-      },
+      data: updateData,
     })
   }
 
