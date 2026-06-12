@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
-  AlertTriangle, Package, TrendingDown, Bell, Check, Loader2, RefreshCw,
+  AlertTriangle, Package, TrendingDown, Bell, Check, Loader2, RefreshCw, X,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -31,6 +31,13 @@ export default function EstoquePage() {
 
   const markAllAsRead = useMutation({
     mutationFn: () => api.patch('/stock/notifications/read-all'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['stock', 'notifications'] })
+    },
+  })
+
+  const markOneAsRead = useMutation({
+    mutationFn: (notificationId: string) => api.patch(`/stock/notifications/${notificationId}/read`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['stock', 'notifications'] })
     },
@@ -127,7 +134,21 @@ export default function EstoquePage() {
                         </p>
                       </div>
                     </div>
-                    {!notif.isRead && <span className="h-2 w-2 rounded-full bg-yellow-400" />}
+                    <div className="flex items-center gap-2">
+                      {!notif.isRead && <span className="h-2 w-2 rounded-full bg-yellow-400" />}
+                      <button
+                        onClick={() => markOneAsRead.mutate(notif.id)}
+                        disabled={markOneAsRead.isPending}
+                        className="rounded p-1 text-slate-400 transition-colors hover:bg-white/30 hover:text-slate-600 dark:hover:text-slate-300"
+                        title="Marcar como lido"
+                      >
+                        {markOneAsRead.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <X className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </motion.div>
                 )
               })}
