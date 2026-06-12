@@ -54,3 +54,7 @@ packages/database/prisma/migrations/.gitkeep
 # Docker volumes
 postgres_data
 redis_data
+
+# Uploads (local)
+public/uploads
+apps/api/public/uploads

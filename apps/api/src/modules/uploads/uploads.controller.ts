@@ -11,7 +11,14 @@ import { randomUUID } from 'crypto'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 
 const storage = diskStorage({
-  destination: './uploads',
+  destination: (req, file, cb) => {
+    const uploadDir = './public/uploads'
+    const fs = require('fs')
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true })
+    }
+    cb(null, uploadDir)
+  },
   filename: (_, file, cb) => cb(null, `${randomUUID()}${extname(file.originalname)}`),
 })
 
