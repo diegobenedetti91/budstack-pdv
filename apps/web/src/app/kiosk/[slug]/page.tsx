@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -60,6 +60,8 @@ const BRAND_TEXT      = '#22D3EE'
 
 export default function KioskPage() {
   const { slug } = useParams<{ slug: string }>()
+  const searchParams = useSearchParams()
+  const tableParam = searchParams.get('table')
   const qc = useQueryClient()
 
   const [step, setStep] = useState<Step>('table')
@@ -100,6 +102,18 @@ export default function KioskPage() {
   useEffect(() => {
     if (tableCurrentOrder?.id && !orderId) setOrderId(tableCurrentOrder.id)
   }, [tableCurrentOrder, orderId])
+
+  // Pré-selecionar mesa se ?table=numero for passado na URL
+  useEffect(() => {
+    if (tableParam && tables.length > 0) {
+      const tableNumber = parseInt(tableParam)
+      const table = tables.find((t) => t.number === tableNumber)
+      if (table) {
+        setSelectedTable(table)
+        setStep('menu')
+      }
+    }
+  }, [tableParam, tables])
 
   const { data: apiOrder, refetch: refetchOrder } = useQuery({
     queryKey: ['kiosk-order', orderId],
