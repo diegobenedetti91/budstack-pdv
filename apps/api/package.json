@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "nest build && npm run db:migrate",
-    "dev": "nest start --watch",
+    "build": "npx @nestjs/cli build && npm run db:migrate",
+    "dev": "npx @nestjs/cli start --watch",
     "start": "node dist/main",
     "lint": "eslint src --ext .ts",
     "type-check": "tsc --noEmit",
