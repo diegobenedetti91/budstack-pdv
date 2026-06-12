@@ -27,6 +27,7 @@ interface Product {
   price: number; costPrice?: number; imageUrl?: string; code?: string
   isActive: boolean; isAvailable: boolean; category?: Category
   stockControl: boolean; stockQuantity: number; stockMinimum: number
+  preparationTimeMinutes?: number
 }
 
 const productSchema = z.object({
@@ -37,6 +38,7 @@ const productSchema = z.object({
   costPrice: z.coerce.number().min(0).optional().or(z.literal('')),
   imageUrl: z.string().url('URL inválida').optional().or(z.literal('')),
   code: z.string().optional(),
+  preparationTimeMinutes: z.coerce.number().int().min(1, 'Tempo mínimo 1 minuto').default(5),
   stockControl: z.boolean().default(false),
   stockQuantity: z.coerce.number().int().min(0).default(0),
   stockMinimum: z.coerce.number().int().min(0).default(0),
@@ -113,10 +115,11 @@ function ProductModal({ onClose, editing, categories }: { onClose: () => void; e
       costPrice: editing.costPrice ?? '',
       imageUrl: editing.imageUrl ?? '',
       code: editing.code ?? '',
+      preparationTimeMinutes: editing.preparationTimeMinutes ?? 5,
       stockControl: editing.stockControl,
       stockQuantity: editing.stockQuantity,
       stockMinimum: editing.stockMinimum,
-    } : { stockControl: false, stockQuantity: 0, stockMinimum: 0 },
+    } : { stockControl: false, stockQuantity: 0, stockMinimum: 0, preparationTimeMinutes: 5 },
   })
 
   const stockControl = watch('stockControl')
@@ -248,6 +251,13 @@ onChange={async (e) => {
             <div className="space-y-1.5">
               <Label>Valor Custo (R$)</Label>
               <Input {...register('costPrice')} type="number" step="0.01" placeholder="0,00" />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Tempo de Preparo (minutos) ⏱️</Label>
+              <Input {...register('preparationTimeMinutes')} type="number" min="1" placeholder="5" />
+              <p className="text-xs text-slate-400">Tempo estimado de preparo do item</p>
+              {errors.preparationTimeMinutes && <p className="text-xs text-red-500">{errors.preparationTimeMinutes.message}</p>}
             </div>
           </div>
 
