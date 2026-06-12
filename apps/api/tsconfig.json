@@ -12,6 +12,7 @@
     "declaration": false,
     "declarationMap": false,
     "skipLibCheck": true,
+    "noEmitOnError": false,
     "paths": {
       "@budstack/types": ["../../packages/types/src/index"]
     }
