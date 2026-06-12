@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "node ../../node_modules/.bin/tsc --skipLibCheck && npm run db:migrate",
+    "build": "npx @nestjs/cli build && npm run db:migrate",
     "dev": "npx @nestjs/cli start --watch",
     "start": "node dist/main",
     "lint": "eslint src --ext .ts",
@@ -14,6 +14,7 @@
   "dependencies": {
     "@budstack/database": "*",
     "@budstack/types": "*",
+    "@nestjs/cli": "^10.4.2",
     "@nestjs/common": "^10.3.10",
     "@nestjs/config": "^3.2.3",
     "@nestjs/core": "^10.3.10",
@@ -26,6 +27,8 @@
     "@nestjs/throttler": "^6.0.0",
     "@nestjs/websockets": "^10.3.10",
     "@prisma/client": "^5.15.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^20.14.9",
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
@@ -36,18 +39,15 @@
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "socket.io": "^4.7.5"
+    "socket.io": "^4.7.5",
+    "typescript": "^5.4.5"
   },
   "devDependencies": {
-    "@nestjs/cli": "^10.4.2",
     "@nestjs/schematics": "^10.1.3",
     "@nestjs/testing": "^10.3.10",
     "@types/bcryptjs": "^2.4.6",
-    "@types/express": "^5.0.6",
     "@types/multer": "^1.4.11",
-    "@types/node": "^20.14.9",
     "@types/passport-jwt": "^4.0.1",
-    "@types/passport-local": "^1.0.38",
-    "typescript": "^5.4.5"
+    "@types/passport-local": "^1.0.38"
   }
 }
