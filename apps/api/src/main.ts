@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import helmet from 'helmet'
 import { join } from 'path'
+import express from 'express'
 import { AppModule } from './app.module'
 
 async function bootstrap() {
@@ -15,7 +16,7 @@ async function bootstrap() {
   })
 
   // Servir arquivos estáticos (uploads)
-  app.useStaticAssets(join(__dirname, '..', '..', 'public'), { prefix: '/uploads' })
+  app.use('/uploads', express.static(join(__dirname, '..', '..', 'public', 'uploads')))
 
   app.setGlobalPrefix('api/v1')
   app.useGlobalPipes(
