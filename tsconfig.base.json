@@ -11,6 +11,10 @@
     "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "paths": {
+      "@budstack/types": ["./packages/types/src"],
+      "@budstack/database": ["./packages/database/src"]
+    }
   }
 }

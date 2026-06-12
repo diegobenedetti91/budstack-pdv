@@ -10,7 +10,7 @@
     "strictNullChecks": false,
     "strict": false,
     "paths": {
-      "@budstack/types": ["../../packages/types/dist/index"]
+      "@budstack/types": ["../../packages/types/src/index"]
     }
   },
   "include": ["src/**/*"],
