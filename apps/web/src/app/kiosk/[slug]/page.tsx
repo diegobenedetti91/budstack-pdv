@@ -1,14 +1,14 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShoppingCart, Plus, Minus, Trash2, ChevronRight, CheckCircle2,
   ChefHat, Loader2, StickyNote, CreditCard, Banknote, QrCode,
   ArrowLeft, Users, TableProperties, Utensils, Split, ReceiptText, BellRing,
-  Sparkles, Star, Clock, Repeat2, Tag, X, AlertCircle, Zap,
+  Sparkles,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatCurrency, cn } from '@/lib/utils'
@@ -16,15 +16,6 @@ import { useKitchenSocket } from '@/hooks/use-kitchen-socket'
 import { WsEvent, PaymentMethod } from '@budstack/types'
 import axios from 'axios'
 
-interface Product {
-  id: string
-  name: string
-  description?: string
-  price: number
-  costPrice?: number
-  imageUrl?: string
-  stockQuantity?: number
-}
 const kioskApi = axios.create({ baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1' })
 
 interface CartItem {
@@ -46,7 +37,6 @@ interface KioskTable {
 
 type Step = 'table' | 'menu' | 'cart' | 'identity' | 'payment' | 'tracking' | 'bill-requested' | 'confirmed'
 type PaymentMode = 'full' | 'split'
-type OrderType = 'table' | 'takeaway'
 
 const paymentMethods = [
   { key: PaymentMethod.CREDIT_CARD, label: 'Crédito', icon: CreditCard },
@@ -70,13 +60,11 @@ const BRAND_TEXT      = '#22D3EE'
 
 export default function KioskPage() {
   const { slug } = useParams<{ slug: string }>()
-  const searchParams = useSearchParams()
   const qc = useQueryClient()
 
   const [step, setStep] = useState<Step>('table')
   const [selectedTable, setSelectedTable] = useState<KioskTable | null>(null)
   const [orderId, setOrderId] = useState<string | null>(null)
-  const [tableFromQR, setTableFromQR] = useState(false)
   const [localCart, setLocalCart] = useState<CartItem[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [editingNote, setEditingNote] = useState<string | null>(null)
@@ -86,15 +74,6 @@ export default function KioskPage() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null)
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
-  const [orderType, setOrderType] = useState<OrderType>('table')
-  const [selectedProductModal, setSelectedProductModal] = useState<Product | null>(null)
-  const [couponCode, setCouponCode] = useState('')
-  const [couponError, setCouponError] = useState('')
-  const [couponLoading, setCouponLoading] = useState(false)
-  const [lastOrder, setLastOrder] = useState<any>(null)
-  const [estimatedTime, setEstimatedTime] = useState(15)
-  const [appliedCoupon, setAppliedCoupon] = useState<any>(null)
-  const [discountAmount, setDiscountAmount] = useState(0)
 
   // ── Queries ────────────────────────────────────────────────────────────────
   const { data: menuData, isLoading: menuLoading } = useQuery({
@@ -115,30 +94,8 @@ export default function KioskPage() {
   })
 
   useEffect(() => {
-    const saved = localStorage.getItem('lastKioskOrder')
-    if (saved) {
-      try {
-        setLastOrder(JSON.parse(saved))
-      } catch (e) {}
-    }
-  }, [])
-
-  useEffect(() => {
     if (tableCurrentOrder?.id && !orderId) setOrderId(tableCurrentOrder.id)
   }, [tableCurrentOrder, orderId])
-
-  useEffect(() => {
-    const tableParam = searchParams.get('table')
-    if (tableParam && tables.length > 0) {
-      const tableNumber = parseInt(tableParam, 10)
-      const foundTable = tables.find(t => t.number === tableNumber)
-      if (foundTable) {
-        setSelectedTable(foundTable)
-        setStep('menu')
-        setTableFromQR(true)
-      }
-    }
-  }, [searchParams, tables])
 
   const { data: apiOrder, refetch: refetchOrder } = useQuery({
     queryKey: ['kiosk-order', orderId],
@@ -157,35 +114,6 @@ export default function KioskPage() {
   const categories = menuData?.categories ?? []
 
   const allProducts = useMemo(() => categories.flatMap((c: any) => c.products ?? []), [categories])
-
-  // Aplicar cupom
-  const applyCoupon = async () => {
-    if (!couponCode.trim()) return
-    setCouponLoading(true)
-    setCouponError('')
-    try {
-      const { data } = await kioskApi.post('/coupons/validate', {
-        code: couponCode,
-        orderTotal: remaining,
-      })
-      setAppliedCoupon(data.coupon)
-      setDiscountAmount(data.discount)
-      setCouponCode('')
-    } catch (error: any) {
-      setCouponError(error.response?.data?.message || 'Cupom inválido')
-    } finally {
-      setCouponLoading(false)
-    }
-  }
-
-  // Calcular tempo estimado
-  useEffect(() => {
-    const itemCount = apiOrder?.items?.length || 0
-    const avgTimePerItem = 5
-    const baseTime = 10
-    setEstimatedTime(baseTime + itemCount * avgTimePerItem)
-  }, [apiOrder?.items])
-
   const filteredProducts = useMemo(() => {
     if (!selectedCategory) return allProducts
     return categories.find((c: any) => c.id === selectedCategory)?.products ?? []
@@ -217,8 +145,7 @@ export default function KioskPage() {
       let id = orderId
       if (!id) {
         const { data: order } = await kioskApi.post(`/kiosk/${slug}/orders`, {
-          tableId:       orderType === 'table' ? selectedTable?.id ?? null : null,
-          type:          orderType,
+          tableId:       selectedTable?.id ?? null,
           customerName:  customerName.trim() || undefined,
           customerPhone: customerPhone.trim() || undefined,
         })
@@ -292,7 +219,6 @@ export default function KioskPage() {
     setSplitPaidCount(0)
     setCustomerName('')
     setCustomerPhone('')
-    setOrderType('table')
   }
 
   // ── Loading ────────────────────────────────────────────────────────────────
@@ -342,7 +268,7 @@ export default function KioskPage() {
             {tenant.company?.tradeName ?? tenant.name}
           </span>
 
-          {selectedTable && !orderId && !tableFromQR && (
+          {selectedTable && !orderId && (
             <button
               onClick={() => { setStep('table'); setOrderId(null); setLocalCart([]) }}
               className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.07] px-2.5 py-1 text-xs text-white/50 transition-colors hover:bg-white/[0.12]"
@@ -497,7 +423,7 @@ export default function KioskPage() {
             >
               {/* Category tabs */}
               <div className="border-b border-white/[0.06] bg-[#09090e]">
-                {!orderId && !tableFromQR && (
+                {!orderId && (
                   <div className="flex items-center gap-2 px-4 pb-1 pt-3">
                     <button
                       onClick={() => setStep('table')}
@@ -539,43 +465,6 @@ export default function KioskPage() {
               </div>
 
               {/* Product grid */}
-
-              {/* REPETIR ÚLTIMO PEDIDO */}
-              {lastOrder && !orderId && !selectedTable && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mx-4 mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <Repeat2 className="h-5 w-5 text-emerald-400" />
-                    <div className="flex-1">
-                      <p className="font-semibold text-white">Repetir último pedido?</p>
-                      <p className="text-xs text-white/60">
-                        {lastOrder.items?.length} itens de {new Date(lastOrder.createdAt).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setLocalCart(
-                          lastOrder.items.map((item: any) => ({
-                            productId: item.productId,
-                            name: item.product?.name,
-                            price: item.unitPrice,
-                            imageUrl: item.product?.imageUrl,
-                            quantity: item.quantity,
-                            notes: '',
-                          }))
-                        )
-                        setLastOrder(null)
-                      }}
-                      className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700"
-                    >
-                      Repetir
-                    </button>
-                  </div>
-                </motion.div>
-              )}
               <div className="flex-1 overflow-y-auto p-4">
                 {filteredProducts.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-20 text-white/20">
@@ -590,7 +479,7 @@ export default function KioskPage() {
                         <motion.div key={product.id}
                           whileHover={{ y: -3, transition: { duration: 0.15 } }}
                           whileTap={{ scale: 0.97 }}
-                          className="group relative overflow-hidden cursor-pointer" onClick={() => setSelectedProductModal(product)} rounded-2xl border border-white/[0.07] bg-white/[0.04] transition-all hover:border-white/[0.14] hover:bg-white/[0.07]"
+                          className="group relative overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.04] transition-all hover:border-white/[0.14] hover:bg-white/[0.07]"
                         >
                           {/* Image */}
                           <div className="relative h-36 overflow-hidden bg-white/[0.04]">
@@ -865,73 +754,32 @@ export default function KioskPage() {
               {/* Bottom actions */}
               <div className="space-y-3 border-t border-white/[0.06] p-5">
                 {localCart.length > 0 && (
-                  <>
-                    {!selectedTable && !orderId && (
-                      <div className="grid grid-cols-2 gap-3">
-                        <button
-                          onClick={() => setOrderType('table')}
-                          className={cn(
-                            'rounded-2xl border-2 px-4 py-3 text-center font-semibold transition-all',
-                            orderType === 'table'
-                              ? 'border-transparent text-white shadow-xl'
-                              : 'border-white/[0.08] bg-white/[0.04] text-white/50 hover:bg-white/[0.08] hover:text-white/80',
-                          )}
-                          style={orderType === 'table' ? { ...brandBg, boxShadow: brandGlow } : {}}
-                        >
-                          <Utensils className="mx-auto mb-1 h-5 w-5" />
-                          Na mesa
-                        </button>
-                        <button
-                          onClick={() => setOrderType('takeaway')}
-                          className={cn(
-                            'rounded-2xl border-2 px-4 py-3 text-center font-semibold transition-all',
-                            orderType === 'takeaway'
-                              ? 'border-transparent text-white shadow-xl'
-                              : 'border-white/[0.08] bg-white/[0.04] text-white/50 hover:bg-white/[0.08] hover:text-white/80',
-                          )}
-                          style={orderType === 'takeaway' ? { ...brandBg, boxShadow: brandGlow } : {}}
-                        >
-                          <ShoppingCart className="mx-auto mb-1 h-5 w-5" />
-                          Para retirada
-                        </button>
-                      </div>
-                    )}
-                    <Button size="lg"
-                      className="w-full gap-2 font-semibold text-white shadow-xl"
-                      style={{ ...brandBg, boxShadow: brandGlow }}
-                      disabled={sendToKitchen.isPending}
-                      onClick={() => {
-                        if (!selectedTable && !orderId) setStep('identity')
-                        else sendToKitchen.mutate()
-                      }}
-                    >
-                      {sendToKitchen.isPending
-                        ? <Loader2 className="h-4 w-4 animate-spin" />
-                        : <ChefHat className="h-4 w-4" />}
-                      {sendToKitchen.isPending ? 'Enviando...' : `Enviar para cozinha · ${formatCurrency(localTotal)}`}
-                    </Button>
-                  </>
+                  <Button size="lg"
+                    className="w-full gap-2 font-semibold text-white shadow-xl"
+                    style={{ ...brandBg, boxShadow: brandGlow }}
+                    disabled={sendToKitchen.isPending}
+                    onClick={() => {
+                      if (!selectedTable && !orderId) setStep('identity')
+                      else sendToKitchen.mutate()
+                    }}
+                  >
+                    {sendToKitchen.isPending
+                      ? <Loader2 className="h-4 w-4 animate-spin" />
+                      : <ChefHat className="h-4 w-4" />}
+                    {sendToKitchen.isPending ? 'Enviando...' : `Enviar para cozinha · ${formatCurrency(localTotal)}`}
+                  </Button>
                 )}
 
                 {selectedTable && orderId && !isFullyPaid && (
-                  <div className="flex gap-2">
-                    <Button size="lg"
-                      className="flex-1 gap-2 border border-white/[0.10] bg-white/[0.06] font-semibold text-white hover:bg-white/[0.11]"
-                      onClick={() => setStep('menu')}
-                    >
-                      <ChevronRight className="h-5 w-5 rotate-180" />
-                      Continuar Comprando
-                    </Button>
-                    <Button size="lg"
-                      className="flex-1 gap-2 font-semibold text-white shadow-xl"
-                      style={{ ...brandBg, boxShadow: brandGlow }}
-                      disabled={requestBill.isPending}
-                      onClick={() => requestBill.mutate()}
-                    >
-                      {requestBill.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <BellRing className="h-5 w-5" />}
-                      {requestBill.isPending ? 'Solicitando...' : `Pedir Conta`}
-                    </Button>
-                  </div>
+                  <Button size="lg"
+                    className="w-full gap-2 font-semibold text-white shadow-xl"
+                    style={{ ...brandBg, boxShadow: brandGlow }}
+                    disabled={requestBill.isPending}
+                    onClick={() => requestBill.mutate()}
+                  >
+                    {requestBill.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <BellRing className="h-5 w-5" />}
+                    {requestBill.isPending ? 'Solicitando...' : `Pedir Conta · ${formatCurrency(remaining)}`}
+                  </Button>
                 )}
 
                 {!selectedTable && (orderId || localCart.length > 0) && !isFullyPaid && localCart.length === 0 && (
@@ -1132,53 +980,6 @@ export default function KioskPage() {
                   </div>
                 )}
 
-
-                {/* Cupom */}
-                <div className="space-y-2">
-                  <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-white/25">Cupom/Promoção</p>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Código do cupom..."
-                      value={couponCode}
-                      onChange={(e) => {
-                        setCouponCode(e.target.value.toUpperCase())
-                        setCouponError('')
-                      }}
-                      className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white placeholder-white/25 outline-none transition hover:bg-white/[0.08] focus:border-cyan-500/50"
-                    />
-                    <button
-                      onClick={applyCoupon}
-                      disabled={couponLoading || !couponCode.trim()}
-                      className="rounded-lg bg-white/[0.08] px-4 py-2 font-bold text-white hover:bg-white/[0.14] disabled:opacity-50"
-                    >
-                      {couponLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Tag className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  {couponError && (
-                    <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-2">
-                      <AlertCircle className="h-4 w-4 text-red-400" />
-                      <p className="text-xs text-red-300">{couponError}</p>
-                    </div>
-                  )}
-                  {appliedCoupon && (
-                    <div className="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">
-                      <div>
-                        <p className="font-bold text-emerald-400">{appliedCoupon.code}</p>
-                        <p className="text-xs text-emerald-300">−{formatCurrency(discountAmount)}</p>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setAppliedCoupon(null)
-                          setDiscountAmount(0)
-                        }}
-                        className="text-emerald-400 hover:text-emerald-300"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  )}
-                </div>
                 {/* Payment mode */}
                 <div>
                   <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-white/25">Como pagar?</p>
@@ -1401,14 +1202,6 @@ export default function KioskPage() {
               <p className="mb-8 text-sm text-white/40">Acompanhe o status do seu pedido</p>
 
               <div className="w-full max-w-md space-y-2.5">
-
-              <div className="mb-6 w-full max-w-md rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 flex items-center gap-3">
-                <Clock className="h-5 w-5 text-cyan-400" />
-                <div className="text-left">
-                  <p className="text-sm font-bold text-cyan-300">Tempo estimado</p>
-                  <p className="text-xs text-cyan-300/60">~{estimatedTime} minutos</p>
-                </div>
-              </div>
                 {apiOrder?.items?.map((item: any, i: number) => {
                   const s = itemStatusMap[item.status] ?? itemStatusMap.PENDING
                   return (
@@ -1458,87 +1251,6 @@ export default function KioskPage() {
           )}
 
         </AnimatePresence>
-
-      {/* MODAL DE DETALHES DO PRODUTO */}
-      <AnimatePresence>
-        {selectedProductModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end bg-black/50 md:items-center"
-            onClick={() => setSelectedProductModal(null)}
-          >
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full rounded-t-3xl bg-[#09090e] p-6 md:max-w-md md:rounded-2xl"
-            >
-              <button
-                onClick={() => setSelectedProductModal(null)}
-                className="absolute right-4 top-4 rounded-lg p-2 text-white/40 hover:bg-white/[0.08]"
-              >
-                <X className="h-5 w-5" />
-              </button>
-
-              {selectedProductModal.imageUrl && (
-                <img
-                  src={selectedProductModal.imageUrl}
-                  alt={selectedProductModal.name}
-                  className="mb-4 h-48 w-full rounded-2xl object-cover"
-                />
-              )}
-
-              <h3 className="mb-2 text-2xl font-bold">{selectedProductModal.name}</h3>
-
-              {selectedProductModal.description && (
-                <p className="mb-4 text-sm text-white/60">{selectedProductModal.description}</p>
-              )}
-
-              <div className="mb-4 flex items-center justify-between rounded-xl bg-white/[0.05] p-3">
-                <span className="text-white/60">Preço</span>
-                <span className="text-xl font-bold" style={{ color: BRAND_TEXT }}>
-                  {formatCurrency(selectedProductModal.price)}
-                </span>
-              </div>
-
-              <button
-                onClick={() => {
-                  const existing = localCart.find((i) => i.productId === selectedProductModal.id)
-                  if (existing) {
-                    setLocalCart(
-                      localCart.map((i) =>
-                        i.productId === selectedProductModal.id
-                          ? { ...i, quantity: i.quantity + 1 }
-                          : i
-                      )
-                    )
-                  } else {
-                    setLocalCart([
-                      ...localCart,
-                      {
-                        productId: selectedProductModal.id,
-                        name: selectedProductModal.name,
-                        price: selectedProductModal.price,
-                        imageUrl: selectedProductModal.imageUrl,
-                        quantity: 1,
-                        notes: '',
-                      },
-                    ])
-                  }
-                  setSelectedProductModal(null)
-                }}
-                className="w-full rounded-xl py-3 font-bold text-white"
-                style={{ background: BRAND_GRADIENT, boxShadow: BRAND_GLOW }}
-              >
-                Adicionar ao Carrinho
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
       </div>
     </div>
   )
