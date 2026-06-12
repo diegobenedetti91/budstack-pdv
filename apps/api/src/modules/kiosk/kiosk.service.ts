@@ -246,11 +246,47 @@ export class KioskService {
     const order = await this.prisma.order.findFirst({
       where: { id: orderId, tenantId: tenant.id },
       include: {
-        items: { include: { product: { select: { name: true, imageUrl: true } } } },
+        items: {
+          include: {
+            product: {
+              select: {
+                name: true,
+                imageUrl: true,
+                preparationTimeMinutes: true,
+              }
+            }
+          }
+        },
         payments: true,
       },
     })
     if (!order) throw new NotFoundException('Pedido não encontrado')
-    return order
+
+    // Calcular tempo estimado
+    const pendingOrdersCount = await this.prisma.order.count({
+      where: {
+        tenantId: tenant.id,
+        status: { in: ['OPEN', 'IN_PROGRESS'] },
+      },
+    })
+
+    // Calcular multiplicador baseado na demanda
+    let demandMultiplier = 1.0
+    if (pendingOrdersCount > 5) demandMultiplier = 1.5
+    else if (pendingOrdersCount > 2) demandMultiplier = 1.3
+
+    // Somar tempo dos produtos
+    const totalPrepTime = (order.items ?? []).reduce((sum, item) => {
+      const itemTime = (item.product?.preparationTimeMinutes ?? 5) * item.quantity
+      return sum + itemTime
+    }, 0)
+
+    const estimatedMinutes = Math.ceil(totalPrepTime * demandMultiplier)
+
+    return {
+      ...order,
+      estimatedMinutes,
+      demandLevel: demandMultiplier,
+    }
   }
 }

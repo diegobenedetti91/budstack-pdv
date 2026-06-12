@@ -694,8 +694,11 @@ export default function KioskPage() {
                       <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-3">
                         <p className="flex items-center gap-2 text-sm text-cyan-400">
                           <ChefHat className="h-4 w-4" />
-                          Tempo estimado: ~{Math.max(10, apiOrder.items.length * 4)} minutos
+                          Tempo estimado: ~{(apiOrder as any)?.estimatedMinutes || Math.max(10, apiOrder.items.length * 4)} minutos
                         </p>
+                        {(apiOrder as any)?.demandLevel > 1 && (
+                          <p className="text-xs text-cyan-300 mt-1">🔥 Restaurante cheio - tempo aumentado {Math.round((apiOrder as any).demandLevel * 100)}%</p>
+                        )}
                       </div>
                     )}
                   </div>
