@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -37,6 +37,7 @@ interface KioskTable {
 
 type Step = 'table' | 'menu' | 'cart' | 'identity' | 'payment' | 'tracking' | 'bill-requested' | 'confirmed'
 type PaymentMode = 'full' | 'split'
+type OrderType = 'table' | 'takeaway'
 
 const paymentMethods = [
   { key: PaymentMethod.CREDIT_CARD, label: 'Crédito', icon: CreditCard },
@@ -60,11 +61,13 @@ const BRAND_TEXT      = '#22D3EE'
 
 export default function KioskPage() {
   const { slug } = useParams<{ slug: string }>()
+  const searchParams = useSearchParams()
   const qc = useQueryClient()
 
   const [step, setStep] = useState<Step>('table')
   const [selectedTable, setSelectedTable] = useState<KioskTable | null>(null)
   const [orderId, setOrderId] = useState<string | null>(null)
+  const [tableFromQR, setTableFromQR] = useState(false)
   const [localCart, setLocalCart] = useState<CartItem[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [editingNote, setEditingNote] = useState<string | null>(null)
@@ -74,6 +77,7 @@ export default function KioskPage() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null)
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
+  const [orderType, setOrderType] = useState<OrderType>('table')
 
   // ── Queries ────────────────────────────────────────────────────────────────
   const { data: menuData, isLoading: menuLoading } = useQuery({
@@ -96,6 +100,19 @@ export default function KioskPage() {
   useEffect(() => {
     if (tableCurrentOrder?.id && !orderId) setOrderId(tableCurrentOrder.id)
   }, [tableCurrentOrder, orderId])
+
+  useEffect(() => {
+    const tableParam = searchParams.get('table')
+    if (tableParam && tables.length > 0) {
+      const tableNumber = parseInt(tableParam, 10)
+      const foundTable = tables.find(t => t.number === tableNumber)
+      if (foundTable) {
+        setSelectedTable(foundTable)
+        setStep('menu')
+        setTableFromQR(true)
+      }
+    }
+  }, [searchParams, tables])
 
   const { data: apiOrder, refetch: refetchOrder } = useQuery({
     queryKey: ['kiosk-order', orderId],
@@ -145,7 +162,8 @@ export default function KioskPage() {
       let id = orderId
       if (!id) {
         const { data: order } = await kioskApi.post(`/kiosk/${slug}/orders`, {
-          tableId:       selectedTable?.id ?? null,
+          tableId:       orderType === 'table' ? selectedTable?.id ?? null : null,
+          type:          orderType,
           customerName:  customerName.trim() || undefined,
           customerPhone: customerPhone.trim() || undefined,
         })
@@ -219,6 +237,7 @@ export default function KioskPage() {
     setSplitPaidCount(0)
     setCustomerName('')
     setCustomerPhone('')
+    setOrderType('table')
   }
 
   // ── Loading ────────────────────────────────────────────────────────────────
@@ -268,7 +287,7 @@ export default function KioskPage() {
             {tenant.company?.tradeName ?? tenant.name}
           </span>
 
-          {selectedTable && !orderId && (
+          {selectedTable && !orderId && !tableFromQR && (
             <button
               onClick={() => { setStep('table'); setOrderId(null); setLocalCart([]) }}
               className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.07] px-2.5 py-1 text-xs text-white/50 transition-colors hover:bg-white/[0.12]"
@@ -423,7 +442,7 @@ export default function KioskPage() {
             >
               {/* Category tabs */}
               <div className="border-b border-white/[0.06] bg-[#09090e]">
-                {!orderId && (
+                {!orderId && !tableFromQR && (
                   <div className="flex items-center gap-2 px-4 pb-1 pt-3">
                     <button
                       onClick={() => setStep('table')}
@@ -754,32 +773,73 @@ export default function KioskPage() {
               {/* Bottom actions */}
               <div className="space-y-3 border-t border-white/[0.06] p-5">
                 {localCart.length > 0 && (
-                  <Button size="lg"
-                    className="w-full gap-2 font-semibold text-white shadow-xl"
-                    style={{ ...brandBg, boxShadow: brandGlow }}
-                    disabled={sendToKitchen.isPending}
-                    onClick={() => {
-                      if (!selectedTable && !orderId) setStep('identity')
-                      else sendToKitchen.mutate()
-                    }}
-                  >
-                    {sendToKitchen.isPending
-                      ? <Loader2 className="h-4 w-4 animate-spin" />
-                      : <ChefHat className="h-4 w-4" />}
-                    {sendToKitchen.isPending ? 'Enviando...' : `Enviar para cozinha · ${formatCurrency(localTotal)}`}
-                  </Button>
+                  <>
+                    {!selectedTable && !orderId && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          onClick={() => setOrderType('table')}
+                          className={cn(
+                            'rounded-2xl border-2 px-4 py-3 text-center font-semibold transition-all',
+                            orderType === 'table'
+                              ? 'border-transparent text-white shadow-xl'
+                              : 'border-white/[0.08] bg-white/[0.04] text-white/50 hover:bg-white/[0.08] hover:text-white/80',
+                          )}
+                          style={orderType === 'table' ? { ...brandBg, boxShadow: brandGlow } : {}}
+                        >
+                          <Utensils className="mx-auto mb-1 h-5 w-5" />
+                          Na mesa
+                        </button>
+                        <button
+                          onClick={() => setOrderType('takeaway')}
+                          className={cn(
+                            'rounded-2xl border-2 px-4 py-3 text-center font-semibold transition-all',
+                            orderType === 'takeaway'
+                              ? 'border-transparent text-white shadow-xl'
+                              : 'border-white/[0.08] bg-white/[0.04] text-white/50 hover:bg-white/[0.08] hover:text-white/80',
+                          )}
+                          style={orderType === 'takeaway' ? { ...brandBg, boxShadow: brandGlow } : {}}
+                        >
+                          <ShoppingCart className="mx-auto mb-1 h-5 w-5" />
+                          Para retirada
+                        </button>
+                      </div>
+                    )}
+                    <Button size="lg"
+                      className="w-full gap-2 font-semibold text-white shadow-xl"
+                      style={{ ...brandBg, boxShadow: brandGlow }}
+                      disabled={sendToKitchen.isPending}
+                      onClick={() => {
+                        if (!selectedTable && !orderId) setStep('identity')
+                        else sendToKitchen.mutate()
+                      }}
+                    >
+                      {sendToKitchen.isPending
+                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                        : <ChefHat className="h-4 w-4" />}
+                      {sendToKitchen.isPending ? 'Enviando...' : `Enviar para cozinha · ${formatCurrency(localTotal)}`}
+                    </Button>
+                  </>
                 )}
 
                 {selectedTable && orderId && !isFullyPaid && (
-                  <Button size="lg"
-                    className="w-full gap-2 font-semibold text-white shadow-xl"
-                    style={{ ...brandBg, boxShadow: brandGlow }}
-                    disabled={requestBill.isPending}
-                    onClick={() => requestBill.mutate()}
-                  >
-                    {requestBill.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <BellRing className="h-5 w-5" />}
-                    {requestBill.isPending ? 'Solicitando...' : `Pedir Conta · ${formatCurrency(remaining)}`}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button size="lg"
+                      className="flex-1 gap-2 border border-white/[0.10] bg-white/[0.06] font-semibold text-white hover:bg-white/[0.11]"
+                      onClick={() => setStep('menu')}
+                    >
+                      <ChevronRight className="h-5 w-5 rotate-180" />
+                      Continuar Comprando
+                    </Button>
+                    <Button size="lg"
+                      className="flex-1 gap-2 font-semibold text-white shadow-xl"
+                      style={{ ...brandBg, boxShadow: brandGlow }}
+                      disabled={requestBill.isPending}
+                      onClick={() => requestBill.mutate()}
+                    >
+                      {requestBill.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <BellRing className="h-5 w-5" />}
+                      {requestBill.isPending ? 'Solicitando...' : `Pedir Conta`}
+                    </Button>
+                  </div>
                 )}
 
                 {!selectedTable && (orderId || localCart.length > 0) && !isFullyPaid && localCart.length === 0 && (

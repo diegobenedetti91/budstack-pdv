@@ -29,6 +29,8 @@ model Tenant {
   orders     Order[]
   shifts     Shift[]
   printers   Printer[]
+  stockNotifications StockNotification[]
+  coupons    Coupon[]
 }
 
 enum Plan {
@@ -229,12 +231,14 @@ model Product {
 
   variations ProductVariation[]
   orderItems OrderItem[]
+  stockNotifications StockNotification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([code, tenantId])
   @@index([tenantId, categoryId])
+  @@index([tenantId, stockControl, stockQuantity])
 }
 
 model ProductVariation {
@@ -267,10 +271,12 @@ model Order {
   customerPhone String?
   customerCount Int?        @default(1)
 
-  subtotal      Decimal @db.Decimal(10, 2) @default(0)
-  discount      Decimal @db.Decimal(10, 2) @default(0)
-  serviceCharge Decimal @db.Decimal(10, 2) @default(0)
-  total         Decimal @db.Decimal(10, 2) @default(0)
+  subtotal       Decimal @db.Decimal(10, 2) @default(0)
+  discount       Decimal @db.Decimal(10, 2) @default(0)
+  couponCode     String?
+  couponDiscount Decimal @db.Decimal(10, 2) @default(0)
+  serviceCharge  Decimal @db.Decimal(10, 2) @default(0)
+  total          Decimal @db.Decimal(10, 2) @default(0)
 
   notes String?
 
@@ -285,6 +291,7 @@ model Order {
   @@unique([orderNumber, tenantId])
   @@index([tenantId, status])
   @@index([tenantId, tableId])
+  @@index([tenantId, createdAt])
 }
 
 enum OrderType {
@@ -322,6 +329,7 @@ model OrderItem {
   updatedAt DateTime @updatedAt
 
   @@index([orderId])
+  @@index([productId])
 }
 
 enum OrderItemStatus {
@@ -360,6 +368,32 @@ model Payment {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+}
+
+model StockNotification {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  type          StockNotificationType
+  currentStock  Int
+  minimumStock  Int
+  isRead        Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, isRead])
+  @@index([productId, createdAt])
+}
+
+enum StockNotificationType {
+  BELOW_MINIMUM
+  OUT_OF_STOCK
 }
 
 enum PaymentMethod {
@@ -436,4 +470,40 @@ enum PrinterDestination {
   BAR
   CASHIER
   BOTH
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CUPONS / PROMOÇÕES
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Coupon {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  code          String
+  description   String?
+  discountType  CouponType  @default(PERCENTAGE)
+  discountValue Decimal     @db.Decimal(10, 2)
+  maxUses       Int?
+  currentUses   Int         @default(0)
+  minOrderValue Decimal?    @db.Decimal(10, 2)
+  maxDiscount   Decimal?    @db.Decimal(10, 2)
+
+  validFrom     DateTime
+  validUntil    DateTime
+  isActive      Boolean     @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([code, tenantId])
+  @@index([tenantId, isActive])
+  @@index([validFrom, validUntil])
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_ITEM
 }

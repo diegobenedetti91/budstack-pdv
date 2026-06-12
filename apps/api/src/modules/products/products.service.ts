@@ -27,10 +27,16 @@ export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(tenantId: string, categoryId?: string) {
-    return this.prisma.product.findMany({
+    const products = await this.prisma.product.findMany({
       where: { tenantId, isActive: true, ...(categoryId && { categoryId }) },
       include: { category: true, variations: { where: { isActive: true } } },
       orderBy: { name: 'asc' },
+    })
+
+    // Filtrar produtos sem estoque (se controle de estoque está ativo)
+    return products.filter(p => {
+      if (!p.stockControl) return true // Produto sem controle de estoque, sempre disponível
+      return p.stockQuantity > 0 // Com controle, só retorna se tem estoque
     })
   }
 

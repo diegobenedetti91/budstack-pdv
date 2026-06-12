@@ -18,6 +18,9 @@ import { KitchenModule } from './modules/kitchen/kitchen.module'
 import { KioskModule } from './modules/kiosk/kiosk.module'
 import { ShiftsModule } from './modules/shifts/shifts.module'
 import { UploadsModule } from './modules/uploads/uploads.module'
+import { StockModule } from './modules/stock/stock.module'
+import { CouponsModule } from './modules/coupons/coupons.module'
+import { FiscalModule } from './modules/fiscal/fiscal.module'
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard'
 
 @Module({
@@ -40,6 +43,9 @@ import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard'
     KioskModule,
     ShiftsModule,
     UploadsModule,
+    StockModule,
+    CouponsModule,
+    FiscalModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

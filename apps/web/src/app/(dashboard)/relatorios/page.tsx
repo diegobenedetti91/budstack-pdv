@@ -172,8 +172,8 @@ export default function RelatoriosPage() {
   // Gráficos
   const hourlyData = Array.from({ length: 24 }, (_, h) => {
     const found = data?.hourly?.find((i: any) => i.hour === h)
-    return { label: `${String(h).padStart(2, '0')}h`, value: found?.revenue ?? 0 }
-  }).filter((_, i) => i >= 8 && i <= 23)
+    return { label: `${String(h).padStart(2, '0')}h`, value: found?.revenue ?? 0, hour: h }
+  }).filter((d) => d.hour >= 8 && d.hour <= 23)
   const maxHourly = Math.max(...hourlyData.map((d) => d.value), 1)
 
   const dailyData = (data?.daily ?? []).map((d: any) => ({

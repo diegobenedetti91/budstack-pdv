@@ -1,8 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
+import { Injectable, NotFoundException, BadRequestException, Inject, Optional } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { KitchenGateway } from '../kitchen/kitchen.gateway'
 import { WhatsappService } from '../whatsapp/whatsapp.service'
 import { PrintService } from '../printers/print.service'
+import { StockService } from '../stock/stock.service'
+import { CouponsService } from '../coupons/coupons.service'
 import { CreateOrderDto } from './dto/create-order.dto'
 import { AddItemDto } from './dto/add-item.dto'
 import { OrderStatus, OrderItemStatus } from '@budstack/types'
@@ -14,6 +16,8 @@ export class OrdersService {
     private kitchen: KitchenGateway,
     private whatsapp: WhatsappService,
     private print: PrintService,
+    private stock: StockService,
+    @Optional() private coupons?: CouponsService,
   ) {}
 
   async findAll(tenantId: string, status?: OrderStatus | OrderStatus[]) {
@@ -119,6 +123,11 @@ export class OrdersService {
       include: { product: true },
     })
 
+    // Decrementar estoque
+    console.log(`[OrdersService] Decrementando estoque - Produto: ${dto.productId}, Quantidade: ${dto.quantity}`)
+    await this.stock.decrementStock(tenantId, dto.productId, dto.quantity)
+    console.log(`[OrdersService] Estoque decrementado com sucesso`)
+
     await this.recalculateTotal(orderId, tenantId)
 
     // Atualiza status do pedido para IN_PROGRESS se estava OPEN
@@ -203,6 +212,32 @@ export class OrdersService {
     return this.prisma.order.update({ where: { id: orderId }, data: updates })
   }
 
+  async applyCoupon(tenantId: string, orderId: string, couponCode: string) {
+    if (!this.coupons) throw new BadRequestException('Serviço de cupons não disponível')
+
+    const order = await this.findOne(tenantId, orderId)
+    const { coupon, discount } = await this.coupons.validate(tenantId, couponCode, Number(order.subtotal))
+
+    await this.coupons.useCoupon(tenantId, couponCode)
+
+    const newTotal = Number(order.subtotal) + Number(order.serviceCharge) - discount
+
+    return this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        couponCode: coupon.code,
+        couponDiscount: discount,
+        total: newTotal,
+      },
+      include: {
+        table: true,
+        user: { select: { id: true, name: true } },
+        items: { include: { product: true } },
+        payments: true,
+      },
+    })
+  }
+
   private async recalculateTotal(orderId: string, tenantId: string) {
     const items = await this.prisma.orderItem.findMany({
       where: { orderId, status: { not: 'CANCELLED' } },
@@ -212,7 +247,7 @@ export class OrdersService {
     const order = await this.prisma.order.findFirst({ where: { id: orderId, tenantId } })
     const company = await this.prisma.company.findUnique({ where: { tenantId } })
     const serviceCharge = subtotal * Number(company?.serviceChargePercent ?? 0) / 100
-    const total = subtotal + serviceCharge - Number(order?.discount ?? 0)
+    const total = subtotal + serviceCharge - Number(order?.couponDiscount ?? 0)
 
     await this.prisma.order.update({
       where: { id: orderId },

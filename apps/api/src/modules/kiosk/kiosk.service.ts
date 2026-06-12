@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { KitchenGateway } from '../kitchen/kitchen.gateway'
+import { StockService } from '../stock/stock.service'
 
 @Injectable()
 export class KioskService {
   constructor(
     private prisma: PrismaService,
     private kitchen: KitchenGateway,
+    private stockService: StockService,
   ) {}
 
   async getTenantInfo(slug: string) {
@@ -137,6 +139,9 @@ export class KioskService {
       data: { orderId, productId, quantity, unitPrice, totalPrice, notes, sentToKitchenAt: new Date() },
       include: { product: { select: { name: true } } },
     })
+
+    // Decrementar estoque
+    await this.stockService.decrementStock(tenant.id, productId, quantity)
 
     // Recalcula total
     const items = await this.prisma.orderItem.findMany({ where: { orderId, status: { not: 'CANCELLED' } } })

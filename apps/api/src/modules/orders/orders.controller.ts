@@ -70,4 +70,14 @@ export class OrdersController {
   ) {
     return this.ordersService.updateStatus(tenantId, id, status)
   }
+
+  @Patch(':id/coupon')
+  @ApiOperation({ summary: 'Aplicar cupom ao pedido' })
+  applyCoupon(
+    @TenantId() tenantId: string,
+    @Param('id') id: string,
+    @Body('couponCode') couponCode: string,
+  ) {
+    return this.ordersService.applyCoupon(tenantId, id, couponCode)
+  }
 }

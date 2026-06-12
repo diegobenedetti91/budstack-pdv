@@ -1,12 +1,21 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
+import { Redis } from 'ioredis'
+import { Inject } from '@nestjs/common'
 
 @Injectable()
 export class ReportsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject('REDIS') private redis: Redis,
+  ) {}
 
   async getDashboard(tenantId: string, from: Date, to: Date) {
-    const [orders, payments, topProducts, hourlyRevenue, allItems] = await Promise.all([
+    const cacheKey = `dashboard:${tenantId}:${from.toISOString()}:${to.toISOString()}`
+    const cached = await this.redis.get(cacheKey)
+    if (cached) return JSON.parse(cached)
+
+    const [orders, payments, topProducts, hourlyRevenue, costByProduct] = await Promise.all([
       this.prisma.order.findMany({
         where: { tenantId, createdAt: { gte: from, lte: to }, status: { not: 'CANCELLED' } },
         select: { id: true, total: true, status: true, createdAt: true, type: true },
@@ -40,13 +49,14 @@ export class ReportsService {
         ORDER BY hour
       `,
 
-      // Todos os itens para calcular custo total real
-      this.prisma.orderItem.findMany({
+      // Custo agregado por produto (sem trazer todos os itens)
+      this.prisma.orderItem.groupBy({
+        by: ['productId'],
         where: {
           order: { tenantId, createdAt: { gte: from, lte: to }, status: { not: 'CANCELLED' } },
           status: { not: 'CANCELLED' },
         },
-        select: { quantity: true, product: { select: { costPrice: true } } },
+        _sum: { quantity: true },
       }),
     ])
 
@@ -54,11 +64,19 @@ export class ReportsService {
     const closedOrders = orders.filter((o) => o.status === 'CLOSED').length
     const avgTicket = closedOrders > 0 ? totalRevenue / closedOrders : 0
 
-    // Custo total e margem bruta
-    const totalCost = allItems.reduce(
-      (acc, item) => acc + Number(item.product.costPrice ?? 0) * item.quantity,
-      0,
-    )
+    // Busca os preços de custo dos produtos top
+    const productIds = costByProduct.map((p) => p.productId)
+    const productCosts = await this.prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, costPrice: true },
+    })
+    const costMap = Object.fromEntries(productCosts.map((p) => [p.id, Number(p.costPrice ?? 0)]))
+
+    // Custo total e margem bruta (usando agregação)
+    const totalCost = costByProduct.reduce((acc, item) => {
+      const costPrice = costMap[item.productId] ?? 0
+      return acc + costPrice * (item._sum.quantity ?? 0)
+    }, 0)
     const grossProfit = totalRevenue - totalCost
     const grossMarginPercent = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0
 
@@ -69,9 +87,9 @@ export class ReportsService {
     })
 
     // Produtos top — nomes + custo
-    const productIds = topProducts.map((p) => p.productId)
+    const topProductIds = topProducts.map((p) => p.productId)
     const productData = await this.prisma.product.findMany({
-      where: { id: { in: productIds } },
+      where: { id: { in: topProductIds } },
       select: { id: true, name: true, imageUrl: true, costPrice: true },
     })
     const productMap = Object.fromEntries(productData.map((p) => [p.id, p]))
@@ -108,7 +126,7 @@ export class ReportsService {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, data]) => ({ date, ...data }))
 
-    return {
+    const result = {
       summary: {
         totalRevenue,
         totalOrders: orders.length,
@@ -124,5 +142,9 @@ export class ReportsService {
       daily,
       hourly: (hourlyRevenue as any[]).map((h) => ({ hour: Number(h.hour), revenue: Number(h.revenue) })),
     }
+
+    // Cache por 5 minutos
+    await this.redis.setex(cacheKey, 300, JSON.stringify(result))
+    return result
   }
 }

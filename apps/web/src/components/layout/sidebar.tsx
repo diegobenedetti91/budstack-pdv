@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, UtensilsCrossed, ShoppingBag, ChefHat, CreditCard,
   Settings, Users, BookOpen, Printer, LogOut, ChevronLeft, ChevronRight, Monitor,
-  BarChart3, DollarSign, Bell,
+  BarChart3, DollarSign, Bell, Package,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -31,6 +31,7 @@ const navItems: NavItem[] = [
   { href: '/pdv',             icon: CreditCard,      label: 'PDV / Caixa',     roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
   { href: '/turno',           icon: DollarSign,      label: 'Turno de Caixa',  roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
   { href: '/cardapio',        icon: BookOpen,        label: 'Cardápio',         roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+  { href: '/estoque',         icon: Package,         label: 'Estoque',          roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
   { href: '/relatorios',      icon: BarChart3,       label: 'Relatórios',       roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
   { href: '/autoatendimento', icon: Monitor,         label: 'Autoatendimento',  roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
   { href: '/usuarios',        icon: Users,           label: 'Usuários',         roles: ['SUPER_ADMIN', 'ADMIN'] },
