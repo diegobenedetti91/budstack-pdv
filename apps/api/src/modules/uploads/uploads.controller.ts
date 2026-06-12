@@ -44,6 +44,6 @@ export class UploadsController {
     file: Express.Multer.File,
   ) {
     const baseUrl = process.env.APP_URL ?? 'http://localhost:3001'
-    return { url: `${baseUrl}/api/v1/uploads/${file.filename}`, filename: file.filename }
+    return { url: `${baseUrl}/uploads/${file.filename}`, filename: file.filename }
   }
 }
