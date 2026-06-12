@@ -55,11 +55,11 @@ Porta: 3306
 │ Node Version: 20.x                      │
 ├─────────────────────────────────────────┤
 │ Build Command:                          │
-│ pnpm install && pnpm db:generate &&     │
-│ pnpm db:migrate && pnpm build:api       │
+│ npm install && npm db:generate &&     │
+│ npm db:migrate && npm build:api       │
 ├─────────────────────────────────────────┤
 │ Start Command:                          │
-│ pnpm start:api                          │
+│ npm start:api                          │
 ├─────────────────────────────────────────┤
 │ Root Directory: /                       │
 └─────────────────────────────────────────┘
@@ -96,10 +96,10 @@ NEXT_PUBLIC_API_URL=https://api.seu-dominio.com/api/v1
 │ Node Version: 20.x                      │
 ├─────────────────────────────────────────┤
 │ Build Command:                          │
-│ pnpm install && pnpm build:web          │
+│ npm install && npm build:web          │
 ├─────────────────────────────────────────┤
 │ Start Command:                          │
-│ pnpm start:web                          │
+│ npm start:web                          │
 ├─────────────────────────────────────────┤
 │ Root Directory: /apps/web               │
 └─────────────────────────────────────────┘
@@ -119,7 +119,7 @@ NODE_ENV=production
 ### ❌ Erro: "ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING"
 
 **Já corrigido!** Adicionamos:
-- `.npmrc` com configurações pnpm
+- `.npmrc` com configurações npm
 - `.node-version` e `.nvmrc` para versão Node.js consistente
 
 Se ainda ocorrer:
@@ -129,7 +129,7 @@ Se ainda ocorrer:
 ### ❌ Erro: "Cannot find module"
 
 **Solução:**
-1. Verifique se `pnpm install` está no Build Command
+1. Verifique se `npm install` está no Build Command
 2. Confirm que Node.js v20.x está selecionado
 
 ### ❌ Banco não conecta

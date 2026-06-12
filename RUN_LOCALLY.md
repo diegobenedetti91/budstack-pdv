@@ -2,17 +2,16 @@
 
 ## Pré-requisitos
 
-- Node.js 18+
-- pnpm (ou npm/yarn)
-- PostgreSQL 14+
-- Redis
+- Node.js 20+
+- npm (v10+)
+- MySQL 8+
 
 ## Setup Rápido
 
 ### 1. Instalar dependências
 
 ```bash
-pnpm install
+npm install
 ```
 
 ### 2. Configurar variáveis de ambiente
@@ -24,8 +23,7 @@ PORT=3001
 APP_URL=http://localhost:3001
 FRONTEND_URL=http://localhost:3000
 
-DATABASE_URL=postgresql://user:password@localhost:5432/budstack
-REDIS_URL=redis://localhost:6379
+DATABASE_URL=mysql://user:password@localhost:3306/budstack
 
 JWT_SECRET=sua-chave-secreta
 JWT_EXPIRES_IN=15m
@@ -40,20 +38,13 @@ STORAGE_TYPE=local
 NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
 ```
 
-### 3. Rodas o Banco (Docker)
+### 3. Criar o Banco MySQL
 
 ```bash
-docker compose up -d postgres redis
-```
+# Criar banco de dados
+mysql -u root -p -e "CREATE DATABASE budstack;"
 
-Ou manualmente:
-```bash
-# PostgreSQL
-createdb budstack
-psql budstack
-
-# Redis
-redis-server
+# Ou use uma GUI como MySQL Workbench
 ```
 
 ### 4. Migrations do Prisma
@@ -68,17 +59,15 @@ npx prisma db push
 ### 5. Rodar o projeto
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
-Esse comando roda **API + Frontend simultaneamente** via Turbo.
-
-Se quiser rodar um de cada vez:
+Se quiser rodar separadamente:
 ```bash
-# Apenas API
+# Apenas API (terminal 1)
 cd apps/api && npm run dev
 
-# Apenas Frontend  
+# Apenas Frontend (terminal 2)
 cd apps/web && npm run dev
 ```
 
@@ -129,15 +118,6 @@ cat apps/api/.env.dev
 echo "DATABASE_URL=postgresql://postgres:password@localhost:5432/budstack" >> apps/api/.env.dev
 ```
 
-### Erro: "Redis não conectado"
-```bash
-# Verifique se Redis está rodando
-redis-cli ping
-# Esperado: PONG
-
-# Se não estiver, inicie:
-redis-server
-```
 
 ### Erro: "Migrations não rodaram"
 ```bash
@@ -169,7 +149,7 @@ budstack-pdv/
 ├── packages/
 │   ├── database/        ← Prisma schema
 │   └── types/           ← Types compartilhados
-└── pnpm-workspace.yaml
+└── package.json         ← npm workspaces
 ```
 
 ## Dados de Teste

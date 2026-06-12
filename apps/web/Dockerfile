@@ -1,20 +1,19 @@
 FROM node:20-alpine AS base
-RUN npm install -g pnpm@9.4.0
 WORKDIR /app
 
 # ── Instalar dependências ────────────────────────────────────────────────────
 FROM base AS deps
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY package*.json ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/types/package.json ./packages/types/
-RUN pnpm install --frozen-lockfile
+RUN npm ci
 
 # ── Build ────────────────────────────────────────────────────────────────────
 FROM deps AS builder
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN cd packages/types && npx tsc
-RUN pnpm --filter @budstack/web build
+RUN cd apps/web && npm run build
 
 # ── Runner ───────────────────────────────────────────────────────────────────
 FROM node:20-alpine AS runner
