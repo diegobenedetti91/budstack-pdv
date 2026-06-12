@@ -23,7 +23,7 @@ export default function EstoquePage() {
 
   const { data: notifications = [], isLoading: notificationsLoading, refetch: refetchNotifications } = useQuery({
     queryKey: ['stock', 'notifications'],
-    queryFn: () => api.get('/stock/notifications').then(r => r.data),
+    queryFn: () => api.get('/stock/notifications?unreadOnly=true').then(r => r.data),
     refetchInterval: 5000, // Atualizar a cada 5 segundos
   })
 
