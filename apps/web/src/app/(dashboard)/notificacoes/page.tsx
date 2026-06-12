@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, CheckCircle2, Loader2, Truck, ShoppingBag, UtensilsCrossed, Clock, Volume2, VolumeX, ReceiptText } from 'lucide-react'
+import { Bell, CheckCircle2, Loader2, Truck, ShoppingBag, UtensilsCrossed, Clock, Volume2, VolumeX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
 import { useToast } from '@/components/ui/use-toast'
@@ -23,14 +23,6 @@ interface ReadyItem {
   readyAt: string
 }
 
-interface BillRequest {
-  orderId: string
-  orderNumber: number
-  tableNumber: number | null
-  customerName: string | null
-  billRequestedAt: string
-  total: number
-}
 
 function elapsed(dateStr: string): { text: string; isLate: boolean } {
   const secs = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
@@ -101,36 +93,6 @@ export default function NotificacoesPage() {
   )
 
   // Pedidos com conta solicitada (campo billRequestedAt persistido no banco)
-  const billRequests: BillRequest[] = (orders as any[])
-    .filter((order) => !!order.billRequestedAt)
-    .map((order) => ({
-      orderId: order.id,
-      orderNumber: order.orderNumber,
-      tableNumber: order.table?.number ?? null,
-      customerName: order.customerName ?? null,
-      billRequestedAt: order.billRequestedAt,
-      total: Number(order.total ?? 0),
-    }))
-
-  // Toca som para novos itens READY
-  useEffect(() => {
-    const newIds = readyItems.map((i) => i.id)
-    const hasNew = newIds.some((id) => !knownIds.has(id))
-    if (hasNew && knownIds.size > 0 && soundEnabled) {
-      try { new Audio('/sounds/bell.mp3').play() } catch {}
-    }
-    setKnownIds(new Set(newIds))
-  }, [readyItems.map((i) => i.id).join(',')])
-
-  const deliver = useMutation({
-    mutationFn: ({ orderId, itemId }: { orderId: string; itemId: string }) =>
-      api.patch(`/orders/${orderId}/items/${itemId}/status`, { status: 'DELIVERED' }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['notif-ready-orders'] })
-      toast({ title: 'Item marcado como entregue' })
-    },
-    onError: () => toast({ title: 'Erro ao atualizar', variant: 'destructive' }),
-  })
 
   const deliverAll = useMutation({
     mutationFn: async () => {
@@ -181,72 +143,6 @@ export default function NotificacoesPage() {
         </div>
       </div>
 
-      {/* Contas pedidas */}
-      {billRequests.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <ReceiptText className="h-5 w-5 text-blue-500" />
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">Contas Pedidas</h2>
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-500 px-1.5 text-[10px] font-bold text-white">
-              {billRequests.length}
-            </span>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {billRequests.map((req) => (
-              <motion.div
-                key={req.orderId}
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                className="flex flex-col rounded-3xl border-2 border-blue-200 bg-white shadow-sm dark:border-blue-900/40 dark:bg-slate-900"
-              >
-                <div className="flex items-start justify-between p-5 pb-3">
-                  <div className="flex items-center gap-3">
-                    {req.tableNumber ? (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 dark:bg-blue-900/20">
-                        <span className="text-2xl font-black text-blue-500">{req.tableNumber}</span>
-                      </div>
-                    ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-100 dark:bg-purple-900/20">
-                        <ShoppingBag className="h-6 w-6 text-purple-500" />
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                        {req.tableNumber ? 'Mesa' : 'Retirada'}
-                      </p>
-                      <p className="text-lg font-black text-slate-900 dark:text-white">#{req.orderNumber}</p>
-                    </div>
-                  </div>
-                  <ElapsedBadge date={req.billRequestedAt} />
-                </div>
-                <div className="flex-1 px-5 pb-3">
-                  <div className="flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 dark:bg-blue-900/10">
-                    <ReceiptText className="h-4 w-4 text-blue-500 shrink-0" />
-                    <span className="text-sm font-semibold text-blue-700 dark:text-blue-400">
-                      Conta solicitada pelo cliente
-                    </span>
-                  </div>
-                  {req.total > 0 && (
-                    <p className="mt-2 text-right text-sm font-bold text-slate-900 dark:text-white">
-                      Total: R$ {req.total.toFixed(2).replace('.', ',')}
-                    </p>
-                  )}
-                </div>
-                <div className="p-5 pt-0">
-                  <Button
-                    size="lg"
-                    className="w-full gap-2 bg-blue-600 text-white hover:bg-blue-700"
-                    onClick={() => window.location.href = `/pdv?pedido=${req.orderId}`}
-                  >
-                    <ReceiptText className="h-4 w-4" />
-                    Ir para o Caixa
-                  </Button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Content */}
       {isLoading ? (
