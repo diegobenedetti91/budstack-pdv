@@ -1,7 +1,6 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
@@ -21,7 +20,6 @@ export default function ContasPage() {
   })
 
   const getTimeSince = (date: string) => {
-  const getTimeSince = (date: string) => {
     const now = new Date()
     const past = new Date(date)
     const seconds = Math.floor((now.getTime() - past.getTime()) / 1000)
@@ -39,14 +37,6 @@ export default function ContasPage() {
     const pendente = Number(conta.total ?? 0) - totalPago
     return pendente > 0.01
   })
-    const now = new Date()
-    const past = new Date(date)
-    const seconds = Math.floor((now.getTime() - past.getTime()) / 1000)
-
-    if (seconds < 60) return `${seconds}s`
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
-    return `${Math.floor(seconds / 3600)}h`
-  }
 
   return (
     <div className="space-y-6">
@@ -80,7 +70,12 @@ export default function ContasPage() {
               <div>
                 <p className="text-sm font-medium text-slate-500">Total Acumulado</p>
                 <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
-                  {formatCurrency(contasPendentes.reduce((sum: number, c: any) => sum + Number(c.total ?? 0), 0))}
+                  {formatCurrency(contasPendentes.reduce((sum: number, c: any) => {
+                    const totalPago = (c.payments ?? [])
+                      .filter((p: any) => p.status === 'APPROVED')
+                      .reduce((s: number, p: any) => s + Number(p.amount ?? 0), 0)
+                    return sum + (Number(c.total ?? 0) - totalPago)
+                  }, 0))}
                 </p>
               </div>
               <div className="rounded-xl bg-green-100 p-3 dark:bg-green-900/30">
@@ -107,6 +102,10 @@ export default function ContasPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {contasPendentes.map((conta: any, i: number) => {
             const timeSince = getTimeSince(conta.billRequestedAt)
+            const totalPago = (conta.payments ?? [])
+              .filter((p: any) => p.status === 'APPROVED')
+              .reduce((sum: number, p: any) => sum + Number(p.amount ?? 0), 0)
+            const pendente = Number(conta.total ?? 0) - totalPago
 
             return (
               <motion.div
@@ -149,12 +148,22 @@ export default function ContasPage() {
                       </div>
                     </div>
 
-                    {/* Total */}
-                    <div className="rounded-lg bg-slate-50 dark:bg-slate-900/30 p-3">
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Total da Conta</p>
-                      <p className="text-xl font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(Number(conta.total))}
-                      </p>
+                    {/* Pagamento */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-500">Total:</span>
+                        <span className="font-semibold text-slate-900 dark:text-white">{formatCurrency(Number(conta.total))}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-500">Pago:</span>
+                        <span className="font-semibold text-green-600">{formatCurrency(totalPago)}</span>
+                      </div>
+                      <div className="rounded-lg bg-slate-50 dark:bg-slate-900/30 p-2">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Pendente</p>
+                        <p className="text-lg font-bold text-slate-900 dark:text-white">
+                          {formatCurrency(pendente)}
+                        </p>
+                      </div>
                     </div>
 
                     {/* Action */}
