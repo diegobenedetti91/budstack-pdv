@@ -74,6 +74,9 @@ export default function KioskPage() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null)
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
+  const [selectedProductDetail, setSelectedProductDetail] = useState<any>(null)
+  const [appliedCoupon, setAppliedCoupon] = useState<string>('')
+  const [lastOrderProducts, setLastOrderProducts] = useState<any[]>([])
 
   // ── Queries ────────────────────────────────────────────────────────────────
   const { data: menuData, isLoading: menuLoading } = useQuery({
@@ -104,6 +107,17 @@ export default function KioskPage() {
     refetchInterval: step === 'tracking' ? 3000 : false,
   })
 
+  useEffect(() => {
+    if (apiOrder?.items && apiOrder.items.length > 0) {
+      setLastOrderProducts(apiOrder.items.map((item: any) => ({
+        productId: item.productId,
+        name: item.product?.name,
+        price: item.product?.price,
+        quantity: item.quantity,
+      })))
+    }
+  }, [apiOrder?.id])
+
   useKitchenSocket({
     [WsEvent.ORDER_ITEM_STATUS]: (payload) => {
       if (payload.orderId === orderId) refetchOrder()
@@ -114,6 +128,13 @@ export default function KioskPage() {
   const categories = menuData?.categories ?? []
 
   const allProducts = useMemo(() => categories.flatMap((c: any) => c.products ?? []), [categories])
+  const bestsellers = useMemo(() => {
+    const counts: Record<string, number> = {}
+    lastOrderProducts.forEach((item: any) => {
+      counts[item.productId] = (counts[item.productId] || 0) + item.quantity
+    })
+    return Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 5)
+  }, [lastOrderProducts])
   const filteredProducts = useMemo(() => {
     if (!selectedCategory) return allProducts
     return categories.find((c: any) => c.id === selectedCategory)?.products ?? []
@@ -200,6 +221,18 @@ export default function KioskPage() {
       const ex = prev.find((i) => i.productId === product.id)
       if (ex) return prev.map((i) => i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i)
       return [...prev, { productId: product.id, name: product.name, price: Number(product.price), imageUrl: product.imageUrl, quantity: 1, notes: '' }]
+    })
+    setSelectedProductDetail(null)
+  }
+
+  const repeatLastOrder = () => {
+    lastOrderProducts.forEach((item: any) => {
+      const product = allProducts.find((p: any) => p.id === item.productId)
+      if (product) {
+        for (let i = 0; i < item.quantity; i++) {
+          addToCart(product)
+        }
+      }
     })
   }
 
@@ -431,6 +464,14 @@ export default function KioskPage() {
                     >
                       <ArrowLeft className="h-3.5 w-3.5" /> Mudar mesa
                     </button>
+                    {lastOrderProducts.length > 0 && (
+                      <button
+                        onClick={repeatLastOrder}
+                        className="flex items-center gap-1.5 text-xs text-emerald-400 transition-colors hover:text-emerald-300"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" /> Repetir último pedido
+                      </button>
+                    )}
                   </div>
                 )}
                 <div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-none">
@@ -479,7 +520,8 @@ export default function KioskPage() {
                         <motion.div key={product.id}
                           whileHover={{ y: -3, transition: { duration: 0.15 } }}
                           whileTap={{ scale: 0.97 }}
-                          className="group relative overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.04] transition-all hover:border-white/[0.14] hover:bg-white/[0.07]"
+                          onClick={() => setSelectedProductDetail(product)}
+                          className="group relative cursor-pointer overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.04] transition-all hover:border-white/[0.14] hover:bg-white/[0.07]"
                         >
                           {/* Image */}
                           <div className="relative h-36 overflow-hidden bg-white/[0.04]">
@@ -492,6 +534,11 @@ export default function KioskPage() {
                             ) : (
                               <div className="flex h-full items-center justify-center">
                                 <ChefHat className="h-10 w-10 text-white/10" />
+                              </div>
+                            )}
+                            {bestsellers.includes(product.id) && (
+                              <div className="absolute left-2 top-2 rounded-full bg-amber-500/90 px-2 py-1 text-[10px] font-bold text-white shadow-lg">
+                                ⭐ Bestseller
                               </div>
                             )}
                             {inCart && (
@@ -658,6 +705,15 @@ export default function KioskPage() {
                         <span style={{ color: brandText }}>{formatCurrency(remaining)}</span>
                       </div>
                     </div>
+
+                    {apiOrder?.items && apiOrder.items.length > 0 && (
+                      <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-3">
+                        <p className="flex items-center gap-2 text-sm text-cyan-400">
+                          <ChefHat className="h-4 w-4" />
+                          Tempo estimado: ~{Math.max(10, apiOrder.items.length * 4)} minutos
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -980,6 +1036,26 @@ export default function KioskPage() {
                   </div>
                 )}
 
+                {/* Coupon */}
+                <div>
+                  <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-white/25">Cupom de desconto</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={appliedCoupon}
+                      onChange={(e) => setAppliedCoupon(e.target.value.toUpperCase())}
+                      placeholder="Código do cupom"
+                      className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm text-white placeholder-white/20 transition-colors hover:bg-white/[0.06] focus:border-white/[0.14] focus:bg-white/[0.07] focus:outline-none"
+                    />
+                    <button className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm font-medium text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white/80">
+                      Aplicar
+                    </button>
+                  </div>
+                  {appliedCoupon && (
+                    <p className="mt-2 text-xs text-emerald-400">✓ Cupom "{appliedCoupon}" aplicado!</p>
+                  )}
+                </div>
+
                 {/* Payment mode */}
                 <div>
                   <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-white/25">Como pagar?</p>
@@ -1252,6 +1328,83 @@ export default function KioskPage() {
 
         </AnimatePresence>
       </div>
+
+      {/* ══ PRODUCT DETAIL MODAL ══════════════════════════════════════ */}
+      <AnimatePresence>
+        {selectedProductDetail && (
+          <motion.div
+            key="product-detail-modal"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+            onClick={() => setSelectedProductDetail(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-2xl rounded-2xl bg-[#09090e] border border-white/[0.08] p-6 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex gap-6">
+                {/* Image */}
+                <div className="w-48 shrink-0 overflow-hidden rounded-xl bg-white/[0.04]">
+                  {selectedProductDetail.imageUrl ? (
+                    <img src={selectedProductDetail.imageUrl} alt={selectedProductDetail.name}
+                      className="h-48 w-full object-cover" />
+                  ) : (
+                    <div className="flex h-48 items-center justify-center">
+                      <ChefHat className="h-16 w-16 text-white/10" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 space-y-4">
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">{selectedProductDetail.name}</h3>
+                    {selectedProductDetail.description && (
+                      <p className="mt-2 text-sm leading-relaxed text-white/60">
+                        {selectedProductDetail.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-black" style={{ color: brandText }}>
+                        {formatCurrency(selectedProductDetail.price)}
+                      </span>
+                      {selectedProductDetail.costPrice && (
+                        <span className="text-sm text-white/30">
+                          Custo: {formatCurrency(selectedProductDetail.costPrice)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {selectedProductDetail.code && (
+                    <p className="text-xs text-white/40">Código: {selectedProductDetail.code}</p>
+                  )}
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      onClick={() => setSelectedProductDetail(null)}
+                      className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 font-medium text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white/80"
+                    >
+                      Fechar
+                    </button>
+                    <button
+                      onClick={() => { addToCart(selectedProductDetail); setSelectedProductDetail(null) }}
+                      className="flex-1 gap-2 rounded-xl px-4 py-3 font-semibold text-white shadow-lg transition-all"
+                      style={{ ...brandBg, boxShadow: brandGlow }}
+                    >
+                      <Plus className="h-4 w-4 inline" /> Adicionar ao pedido
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
