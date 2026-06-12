@@ -67,14 +67,19 @@ npx prisma db push
 
 ### 5. Rodar o projeto
 
-**Terminal 1 - Backend**:
 ```bash
-pnpm dev:api
+pnpm dev
 ```
 
-**Terminal 2 - Frontend**:
+Esse comando roda **API + Frontend simultaneamente** via Turbo.
+
+Se quiser rodar um de cada vez:
 ```bash
-pnpm dev:web
+# Apenas API
+cd apps/api && npm run dev
+
+# Apenas Frontend  
+cd apps/web && npm run dev
 ```
 
 ## Acessar
@@ -142,11 +147,8 @@ npx prisma migrate deploy --skip-generate
 
 ### Erro: "Porta 3000/3001 já em uso"
 ```bash
-# Mudar porta da API:
-PORT=3002 pnpm dev:api
-
-# Mudar porta do Web:
-NEXT_PUBLIC_API_URL=http://localhost:3002/api/v1 pnpm dev:web
+# Mudar para outra porta
+PORT=3002 NEXT_PUBLIC_API_URL=http://localhost:3002/api/v1 pnpm dev
 ```
 
 ## Estrutura de Pastas
