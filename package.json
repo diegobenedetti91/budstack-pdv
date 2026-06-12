@@ -6,7 +6,8 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build:api && npm run build:web",
+    "prebuild": "cd packages/database && npm run db:generate",
+    "build": "cd packages/types && npx tsc && cd ../../ && npm run build:api && npm run build:web",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
