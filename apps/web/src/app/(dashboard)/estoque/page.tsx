@@ -40,6 +40,10 @@ export default function EstoquePage() {
     mutationFn: (notificationId: string) => api.patch(`/stock/notifications/${notificationId}/read`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['stock', 'notifications'] })
+      refetchNotifications()
+    },
+    onError: (error: any) => {
+      console.error('Erro ao marcar como lido:', error)
     },
   })
 

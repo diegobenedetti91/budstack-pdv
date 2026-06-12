@@ -229,6 +229,8 @@ model Product {
   stockQuantity Int     @default(0)
   stockMinimum  Int     @default(0)
 
+  preparationTimeMinutes Int @default(5)
+
   variations ProductVariation[]
   orderItems OrderItem[]
   stockNotifications StockNotification[]
