@@ -173,7 +173,7 @@ function ProductModal({ onClose, editing, categories }: { onClose: () => void; e
                     const formData = new FormData()
                     formData.append('file', file)
                     try {
-                      const res = await fetch('/api/v1/uploads', { method: 'POST', body: formData })
+                      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/uploads', { method: 'POST', body: formData })
                       const { url } = await res.json()
                       setValue('imageUrl', url)
                     } catch (error) {
