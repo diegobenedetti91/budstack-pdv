@@ -20,7 +20,6 @@ export class PaymentsService {
       include: { payments: true },
     })
     if (!order) throw new BadRequestException('Pedido não encontrado')
-    if (order.status === 'CLOSED') throw new BadRequestException('Pedido já fechado')
 
     const alreadyPaid = order.payments
       .filter((p) => p.status === 'APPROVED')
