@@ -21,6 +21,24 @@ export default function ContasPage() {
   })
 
   const getTimeSince = (date: string) => {
+  const getTimeSince = (date: string) => {
+    const now = new Date()
+    const past = new Date(date)
+    const seconds = Math.floor((now.getTime() - past.getTime()) / 1000)
+
+    if (seconds < 60) return `${seconds}s`
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
+    return `${Math.floor(seconds / 3600)}h`
+  }
+
+  // Filtrar apenas contas com pagamento pendente
+  const contasPendentes = contas.filter((conta: any) => {
+    const totalPago = (conta.payments ?? [])
+      .filter((p: any) => p.status === 'APPROVED')
+      .reduce((sum: number, p: any) => sum + Number(p.amount ?? 0), 0)
+    const pendente = Number(conta.total ?? 0) - totalPago
+    return pendente > 0.01
+  })
     const now = new Date()
     const past = new Date(date)
     const seconds = Math.floor((now.getTime() - past.getTime()) / 1000)
@@ -46,7 +64,7 @@ export default function ContasPage() {
               <div>
                 <p className="text-sm font-medium text-slate-500">Contas Pendentes</p>
                 <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
-                  {contas.length}
+                  {contasPendentes.length}
                 </p>
               </div>
               <div className="rounded-xl bg-orange-100 p-3 dark:bg-orange-900/30">
@@ -62,7 +80,7 @@ export default function ContasPage() {
               <div>
                 <p className="text-sm font-medium text-slate-500">Total Acumulado</p>
                 <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
-                  {formatCurrency(contas.reduce((sum: number, c: any) => sum + Number(c.total ?? 0), 0))}
+                  {formatCurrency(contasPendentes.reduce((sum: number, c: any) => sum + Number(c.total ?? 0), 0))}
                 </p>
               </div>
               <div className="rounded-xl bg-green-100 p-3 dark:bg-green-900/30">
@@ -78,7 +96,7 @@ export default function ContasPage() {
         <div className="flex justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
         </div>
-      ) : contas.length === 0 ? (
+      ) : contasPendentes.length === 0 ? (
         <Card className="border-0 shadow-sm">
           <CardContent className="p-12 text-center">
             <ReceiptText className="h-12 w-12 mx-auto text-slate-300 dark:text-slate-700 mb-4" />
@@ -87,7 +105,7 @@ export default function ContasPage() {
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {contas.map((conta: any, i: number) => {
+          {contasPendentes.map((conta: any, i: number) => {
             const timeSince = getTimeSince(conta.billRequestedAt)
 
             return (
