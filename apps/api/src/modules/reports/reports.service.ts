@@ -1,19 +1,11 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
-import { Redis } from 'ioredis'
-import { Inject } from '@nestjs/common'
 
 @Injectable()
 export class ReportsService {
-  constructor(
-    private prisma: PrismaService,
-    @Inject('REDIS') private redis: Redis,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async getDashboard(tenantId: string, from: Date, to: Date) {
-    const cacheKey = `dashboard:${tenantId}:${from.toISOString()}:${to.toISOString()}`
-    const cached = await this.redis.get(cacheKey)
-    if (cached) return JSON.parse(cached)
 
     const [orders, payments, topProducts, hourlyRevenue, costByProduct] = await Promise.all([
       this.prisma.order.findMany({
@@ -38,12 +30,12 @@ export class ReportsService {
       }),
 
       this.prisma.$queryRaw<Array<{ hour: number; revenue: number }>>`
-        SELECT EXTRACT(HOUR FROM o."createdAt") as hour,
-               SUM(o.total)::float as revenue
-        FROM "Order" o
-        WHERE o."tenantId" = ${tenantId}
-          AND o."createdAt" >= ${from}
-          AND o."createdAt" <= ${to}
+        SELECT HOUR(o.createdAt) as hour,
+               CAST(SUM(o.total) AS DECIMAL(10,2)) as revenue
+        FROM Order o
+        WHERE o.tenantId = ${tenantId}
+          AND o.createdAt >= ${from}
+          AND o.createdAt <= ${to}
           AND o.status != 'CANCELLED'
         GROUP BY hour
         ORDER BY hour
@@ -126,7 +118,7 @@ export class ReportsService {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, data]) => ({ date, ...data }))
 
-    const result = {
+    return {
       summary: {
         totalRevenue,
         totalOrders: orders.length,
@@ -142,9 +134,5 @@ export class ReportsService {
       daily,
       hourly: (hourlyRevenue as any[]).map((h) => ({ hour: Number(h.hour), revenue: Number(h.revenue) })),
     }
-
-    // Cache por 5 minutos
-    await this.redis.setex(cacheKey, 300, JSON.stringify(result))
-    return result
   }
 }
