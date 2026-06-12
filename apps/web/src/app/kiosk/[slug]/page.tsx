@@ -105,7 +105,8 @@ export default function KioskPage() {
     queryKey: ['kiosk-order', orderId],
     queryFn: () => kioskApi.get(`/kiosk/${slug}/orders/${orderId}`).then((r) => r.data),
     enabled: !!orderId,
-    refetchInterval: step === 'tracking' ? 3000 : false,
+    refetchInterval: orderId ? 4000 : false,
+    refetchIntervalPaused: false,
   })
 
   useEffect(() => {
