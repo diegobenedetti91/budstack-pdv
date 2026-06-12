@@ -1,18 +1,22 @@
 {
   "name": "budstack-pdv",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "build": "turbo run build",
+    "build": "npm run build:api && npm run build:web",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
-    "db:generate": "turbo run db:generate",
-    "db:migrate": "turbo run db:migrate",
+    "db:generate": "cd packages/database && npm run db:generate",
+    "db:migrate": "cd packages/database && npm run db:migrate",
     "db:studio": "cd packages/database && npx prisma studio",
-    "build:api": "pnpm --filter @budstack/api build",
-    "build:web": "pnpm --filter @budstack/web build",
+    "build:api": "cd apps/api && npm run build",
+    "build:web": "cd apps/web && npm run build",
     "start:api": "node apps/api/dist/main",
-    "start:web": "pnpm --filter @budstack/web start"
+    "start:web": "cd apps/web && npm start"
   },
   "devDependencies": {
     "turbo": "^2.0.0",
@@ -21,7 +25,6 @@
   },
   "engines": {
     "node": ">=20.0.0",
-    "pnpm": ">=9.0.0"
-  },
-  "packageManager": "pnpm@9.4.0"
+    "npm": ">=10.0.0"
+  }
 }
