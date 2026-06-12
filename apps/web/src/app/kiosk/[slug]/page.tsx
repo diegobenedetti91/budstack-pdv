@@ -87,7 +87,14 @@ export default function KioskPage() {
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [orderType, setOrderType] = useState<OrderType>('table')
-  const [selectedProductModal, setSelectedProductModal] = useState<Product | null>(null)  const [couponCode, setCouponCode] = useState('')  const [couponError, setCouponError] = useState('')  const [couponLoading, setCouponLoading] = useState(false)  const [lastOrder, setLastOrder] = useState<any>(null)  const [estimatedTime, setEstimatedTime] = useState(15)  const [appliedCoupon, setAppliedCoupon] = useState<any>(null)  const [discountAmount, setDiscountAmount] = useState(0)
+  const [selectedProductModal, setSelectedProductModal] = useState<Product | null>(null)
+  const [couponCode, setCouponCode] = useState('')
+  const [couponError, setCouponError] = useState('')
+  const [couponLoading, setCouponLoading] = useState(false)
+  const [lastOrder, setLastOrder] = useState<any>(null)
+  const [estimatedTime, setEstimatedTime] = useState(15)
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null)
+  const [discountAmount, setDiscountAmount] = useState(0)
 
   // ── Queries ────────────────────────────────────────────────────────────────
   const { data: menuData, isLoading: menuLoading } = useQuery({
