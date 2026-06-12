@@ -70,6 +70,7 @@ export class UploadsController {
     try {
       const stream = fs.createReadStream(filepath)
       res.setHeader('Access-Control-Allow-Origin', '*')
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
       res.setHeader('Content-Type', 'image/png')
       res.setHeader('Cache-Control', 'public, max-age=31536000')
       stream.pipe(res)
