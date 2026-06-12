@@ -9,7 +9,7 @@ export class FiscalService {
   async emitNfce(tenantId: string, orderId: string) {
     const order = await this.prisma.order.findFirst({
       where: { id: orderId, tenantId },
-      include: { items: { include: { product: true } } },
+      include: { items: { include: { product: true } }, payments: true },
     })
 
     if (!order) throw new BadRequestException('Pedido não encontrado')
@@ -53,7 +53,7 @@ export class FiscalService {
   async emitSat(tenantId: string, orderId: string) {
     const order = await this.prisma.order.findFirst({
       where: { id: orderId, tenantId },
-      include: { items: { include: { product: true } } },
+      include: { items: { include: { product: true } }, payments: true },
     })
 
     if (!order) throw new BadRequestException('Pedido não encontrado')
