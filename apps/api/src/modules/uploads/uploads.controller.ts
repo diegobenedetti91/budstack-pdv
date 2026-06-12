@@ -1,7 +1,7 @@
 import {
   Controller, Post, Get, UseInterceptors, UploadedFile,
   UseGuards, BadRequestException, ParseFilePipe, Param,
-  Res,
+  Res, MaxFileSizeValidator,
 } from '@nestjs/common'
 import { Response } from 'express'
 import { FileInterceptor } from '@nestjs/platform-express'
