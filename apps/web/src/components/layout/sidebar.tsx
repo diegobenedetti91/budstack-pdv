@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, UtensilsCrossed, ShoppingBag, ChefHat, CreditCard,
   Settings, Users, BookOpen, Printer, LogOut, ChevronLeft, ChevronRight, Monitor,
-  BarChart3, DollarSign, Bell, Package, TrendingUp,
+  BarChart3, DollarSign, Bell, Package, TrendingUp, ReceiptText,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -28,6 +28,7 @@ const navItems: NavItem[] = [
   { href: '/pedidos',         icon: ShoppingBag,     label: 'Pedidos',          roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'] },
   { href: '/cozinha',         icon: ChefHat,         label: 'Cozinha',          badge: 'KDS', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'KITCHEN'] },
   { href: '/notificacoes',    icon: Bell,            label: 'Pedidos Prontos',  roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'WAITER', 'KITCHEN'] },
+  { href: '/contas',          icon: ReceiptText,     label: 'Contas Solicitadas', roles: ['SUPER_ADMIN', 'ADMIN', 'WAITER'] },
   { href: '/pdv',             icon: CreditCard,      label: 'PDV / Caixa',     roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
   { href: '/turno',           icon: DollarSign,      label: 'Turno de Caixa',  roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
   { href: '/cardapio',        icon: BookOpen,        label: 'Cardápio',         roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },

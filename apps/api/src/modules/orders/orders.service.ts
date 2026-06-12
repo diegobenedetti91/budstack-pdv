@@ -20,20 +20,30 @@ export class OrdersService {
     @Optional() private coupons?: CouponsService,
   ) {}
 
-  async findAll(tenantId: string, status?: OrderStatus | OrderStatus[]) {
+  async findAll(tenantId: string, status?: OrderStatus | OrderStatus[], billRequested?: boolean) {
     let statusFilter: any = undefined
     if (status) {
       statusFilter = Array.isArray(status) ? { in: status } : status
     }
+
+    let billRequestedFilter: any = undefined
+    if (billRequested) {
+      billRequestedFilter = { isNot: null }
+    }
+
     return this.prisma.order.findMany({
-      where: { tenantId, ...(statusFilter && { status: statusFilter }) },
+      where: {
+        tenantId,
+        ...(statusFilter && { status: statusFilter }),
+        ...(billRequested && { billRequestedAt: billRequestedFilter }),
+      },
       include: {
         table: true,
         user: { select: { id: true, name: true } },
         items: { include: { product: true } },
         payments: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { billRequestedAt: billRequested ? 'desc' : undefined, createdAt: 'desc' },
     })
   }
 

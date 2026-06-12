@@ -18,12 +18,14 @@ export class OrdersController {
   @Get()
   @ApiOperation({ summary: 'Listar pedidos' })
   @ApiQuery({ name: 'status', enum: OrderStatus, required: false, isArray: true })
+  @ApiQuery({ name: 'billRequested', type: Boolean, required: false })
   findAll(
     @TenantId() tenantId: string,
     @Query('status', new ParseArrayPipe({ items: String, separator: ',', optional: true })) status?: OrderStatus[],
+    @Query('billRequested') billRequested?: string,
   ) {
     const normalized = status?.length === 1 ? status[0] : status
-    return this.ordersService.findAll(tenantId, normalized as any)
+    return this.ordersService.findAll(tenantId, normalized as any, billRequested === 'true')
   }
 
   @Get('table/:tableId/open')
