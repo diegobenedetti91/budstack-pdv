@@ -223,10 +223,6 @@ export default function KioskPage() {
       setSelectedPayment(null)
       if (paymentMode === 'split') setSplitPaidCount((n) => n + 1)
       refetchOrder()
-      // Invalida query de pedido atual da mesa para verificar se há novo pedido aberto
-      if (selectedTable) {
-        qc.invalidateQueries({ queryKey: ['kiosk-table-order', selectedTable.id] })
-      }
     },
   })
 
