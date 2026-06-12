@@ -26,16 +26,11 @@ export class OrdersService {
       statusFilter = Array.isArray(status) ? { in: status } : status
     }
 
-    let billRequestedFilter: any = undefined
-    if (billRequested) {
-      billRequestedFilter = { isNot: null }
-    }
-
     return this.prisma.order.findMany({
       where: {
         tenantId,
         ...(statusFilter && { status: statusFilter }),
-        ...(billRequested && { billRequestedAt: billRequestedFilter }),
+        ...(billRequested && { billRequestedAt: { not: null } }),
       },
       include: {
         table: true,
@@ -43,7 +38,7 @@ export class OrdersService {
         items: { include: { product: true } },
         payments: true,
       },
-      orderBy: { billRequestedAt: billRequested ? 'desc' : undefined, createdAt: 'desc' },
+      orderBy: billRequested ? { billRequestedAt: 'desc' } : { createdAt: 'desc' },
     })
   }
 
