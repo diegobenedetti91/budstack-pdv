@@ -114,7 +114,14 @@ export default function KioskPage() {
     enabled: !!selectedTable && selectedTable.status === 'OCCUPIED',
   })
 
-  useEffect(() => {    const saved = localStorage.getItem('lastKioskOrder')    if (saved) {      try {        setLastOrder(JSON.parse(saved))      } catch (e) {}    }  }, [])
+  useEffect(() => {
+    const saved = localStorage.getItem('lastKioskOrder')
+    if (saved) {
+      try {
+        setLastOrder(JSON.parse(saved))
+      } catch (e) {}
+    }
+  }, [])
 
   useEffect(() => {
     if (tableCurrentOrder?.id && !orderId) setOrderId(tableCurrentOrder.id)
