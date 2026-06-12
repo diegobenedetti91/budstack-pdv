@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Query, UseGuards } from '@nestjs/common'
+import { Controller, Get, Patch, Query, UseGuards, Param } from '@nestjs/common'
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger'
 import { StockService } from './stock.service'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
@@ -29,9 +29,13 @@ export class StockController {
     return this.stockService.getStockNotifications(tenantId, unreadOnly === 'true')
   }
 
-  @Patch('notifications/:id/read')
-  async markAsRead(@TenantId() tenantId: string) {
-    // Mark all as read
+  @Patch('notifications/read-all')
+  async markAllAsRead(@TenantId() tenantId: string) {
     return this.stockService.markAllNotificationsAsRead(tenantId)
+  }
+
+  @Patch('notifications/:id/read')
+  async markOneAsRead(@Param('id') notificationId: string) {
+    return this.stockService.markNotificationAsRead(notificationId)
   }
 }

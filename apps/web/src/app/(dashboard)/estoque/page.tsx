@@ -30,7 +30,7 @@ export default function EstoquePage() {
   const unreadCount = notifications.filter((n: any) => !n.isRead).length
 
   const markAllAsRead = useMutation({
-    mutationFn: () => api.patch('/stock/notifications/read'),
+    mutationFn: () => api.patch('/stock/notifications/read-all'),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['stock', 'notifications'] })
     },
