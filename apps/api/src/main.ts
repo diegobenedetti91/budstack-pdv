@@ -15,8 +15,9 @@ async function bootstrap() {
     credentials: true,
   })
 
-  // Servir uploads como static files
-  app.use('/uploads', express.static(join(process.cwd(), 'apps', 'api', 'public', 'uploads')))
+  // Servir uploads como static files ANTES do prefix
+  const uploadPath = join(__dirname, '..', 'public', 'uploads')
+  app.use('/uploads', express.static(uploadPath))
 
   app.setGlobalPrefix('api/v1')
   app.useGlobalPipes(
