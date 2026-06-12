@@ -121,7 +121,10 @@ export default function KioskPage() {
 
   useKitchenSocket({
     [WsEvent.ORDER_ITEM_STATUS]: (payload) => {
-      if (payload.orderId === orderId) refetchOrder()
+      if (payload.orderId === orderId && orderId) {
+        refetchOrder()
+        qc.invalidateQueries({ queryKey: ['kiosk-order', orderId] })
+      }
     },
   })
 
