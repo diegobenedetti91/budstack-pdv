@@ -173,9 +173,7 @@ function ProductModal({ onClose, editing, categories }: { onClose: () => void; e
                     const formData = new FormData()
                     formData.append('file', file)
                     try {
-                      const { data } = await api.post('/uploads', formData, {
-                        headers: { 'Content-Type': 'multipart/form-data' },
-                      })
+                      const { data } = await api.post('/uploads', formData)
                       setValue('imageUrl', data.url)
                     } catch (error) {
                       alert('Erro ao fazer upload')
