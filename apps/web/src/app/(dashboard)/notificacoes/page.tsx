@@ -149,7 +149,7 @@ export default function NotificacoesPage() {
         <div className="flex h-64 items-center justify-center">
           <Loader2 className="h-10 w-10 animate-spin text-cyan-500" />
         </div>
-      ) : readyItems.length === 0 && billRequests.length === 0 ? (
+      ) : readyItems.length === 0 ? (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           className="flex flex-col items-center justify-center rounded-3xl border border-slate-100 bg-white py-24 dark:border-slate-800 dark:bg-slate-900">
           <CheckCircle2 className="mb-4 h-16 w-16 text-green-400" />
