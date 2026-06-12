@@ -57,7 +57,7 @@ export class OrdersService {
   }
 
   async findOpenByTable(tenantId: string, tableId: string) {
-    return this.prisma.order.findFirst({
+    const activeOrder = await this.prisma.order.findFirst({
       where: { tenantId, tableId, status: { in: ['OPEN', 'IN_PROGRESS', 'READY', 'DELIVERED'] } },
       include: {
         table: true,
@@ -65,6 +65,18 @@ export class OrdersService {
         payments: true,
       },
     })
+
+    if (!activeOrder) return null
+
+    // Verifica se há saldo pendente
+    const totalPago = (activeOrder.payments ?? [])
+      .filter((p) => p.status === 'APPROVED')
+      .reduce((sum, p) => sum + Number(p.amount ?? 0), 0)
+    const pendente = Number(activeOrder.total ?? 0) - totalPago
+
+    // Se a comanda foi completamente paga, permite novo pedido
+    // Se ainda há saldo, retorna o pedido (bloqueia)
+    return pendente > 0.01 ? activeOrder : null
   }
 
   async create(tenantId: string, userId: string, dto: CreateOrderDto) {
