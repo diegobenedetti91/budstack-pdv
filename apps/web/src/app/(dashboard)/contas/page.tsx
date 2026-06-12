@@ -141,7 +141,7 @@ export default function ContasPage() {
 
                     {/* Action */}
                     <button
-                      onClick={() => router.push(`/pdv?orderId=${conta.id}`)}
+                      onClick={() => router.push(`/pdv?pedido=${conta.id}`)}
                       className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-sm hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2"
                     >
                       <Zap className="h-4 w-4" />
