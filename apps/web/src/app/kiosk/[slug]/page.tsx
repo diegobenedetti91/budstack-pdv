@@ -564,30 +564,10 @@ export default function KioskPage() {
                                 {product.description}
                               </p>
                             )}
-                            <div className="mt-3 flex items-center justify-between">
+                            <div className="mt-3">
                               <span className="text-sm font-black" style={{ color: brandText }}>
                                 {formatCurrency(product.price)}
                               </span>
-                              {inCart ? (
-                                <div className="flex items-center gap-1">
-                                  <button onClick={() => updateLocalQty(product.id, -1)}
-                                    className="flex h-7 w-7 items-center justify-center rounded-xl bg-white/[0.08] transition-colors hover:bg-red-500/20 hover:text-red-400">
-                                    <Minus className="h-3 w-3" />
-                                  </button>
-                                  <span className="w-5 text-center text-sm font-bold">{inCart.quantity}</span>
-                                  <button onClick={() => addToCart(product)}
-                                    className="flex h-7 w-7 items-center justify-center rounded-xl text-white shadow-md transition-opacity hover:opacity-85"
-                                    style={{ ...brandBg }}>
-                                    <Plus className="h-3 w-3" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <button onClick={() => addToCart(product)}
-                                  className="flex h-8 w-8 items-center justify-center rounded-xl text-white shadow-lg transition-all hover:opacity-85"
-                                  style={{ ...brandBg }}>
-                                  <Plus className="h-4 w-4" />
-                                </button>
-                              )}
                             </div>
                           </div>
                         </motion.div>
