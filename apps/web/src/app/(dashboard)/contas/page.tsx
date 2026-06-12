@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
@@ -13,6 +14,7 @@ import { formatCurrency, cn } from '@/lib/utils'
 
 export default function ContasPage() {
   const qc = useQueryClient()
+  const router = useRouter()
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
 
   const { data: contas = [], isLoading, refetch } = useQuery({
@@ -182,7 +184,7 @@ export default function ContasPage() {
                         </div>
                       ) : (
                         <button
-                          onClick={() => setConfirmingId(conta.id)}
+                          onClick={() => router.push(`/pdv?orderId=${conta.id}`)}
                           className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-sm hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2"
                         >
                           <Zap className="h-4 w-4" />
