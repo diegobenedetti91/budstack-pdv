@@ -4,6 +4,7 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "outDir": "./dist",
+    "rootDir": "./src",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "strictNullChecks": false,
@@ -11,7 +12,6 @@
     "declaration": false,
     "declarationMap": false,
     "skipLibCheck": true,
-    "noEmitOnError": false,
     "paths": {
       "@budstack/types": ["../../packages/types/src/index"]
     }
