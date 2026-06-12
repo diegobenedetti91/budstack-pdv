@@ -9,6 +9,7 @@ import {
   GripVertical, Eye, EyeOff,
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
+import { useAuthStore } from '@/stores/auth.store'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
@@ -167,18 +168,26 @@ function ProductModal({ onClose, editing, categories }: { onClose: () => void; e
                   id="imageUpload"
                   accept="image/*"
                   className="hidden"
-                  onChange={async (e) => {
+onChange={async (e) => {
                     const file = e.currentTarget.files?.[0]
                     if (!file) return
                     const formData = new FormData()
                     formData.append('file', file)
                     try {
-                      const { data } = await api.post('/uploads', formData)
-                      setValue('imageUrl', data.url)
+                      const token = useAuthStore.getState().accessToken || ''
+                      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/uploads', {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'Authorization': 'Bearer ' + token }
+                      })
+                      if (!res.ok) throw new Error('Upload falhou')
+                      const { url } = await res.json()
+                      setValue('imageUrl', url)
                     } catch (error) {
-                      alert('Erro ao fazer upload')
+                      alert('Erro ao fazer upload: ' + error.message)
                     }
                   }}
+
                 />
                 <Button
                   type="button"
