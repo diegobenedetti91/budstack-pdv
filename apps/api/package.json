@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "npx tsc --skipLibCheck && npm run db:migrate",
+    "build": "node ../../node_modules/.bin/tsc --skipLibCheck && npm run db:migrate",
     "dev": "npx @nestjs/cli start --watch",
     "start": "node dist/main",
     "lint": "eslint src --ext .ts",
