@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core'
 import { ValidationPipe } from '@nestjs/common'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import helmet from 'helmet'
+import { join } from 'path'
+import * as express from 'express'
 import { AppModule } from './app.module'
 
 async function bootstrap() {
@@ -13,7 +15,8 @@ async function bootstrap() {
     credentials: true,
   })
 
-  // TODO: Servir uploads - implementar ao fazer deploy no Hostinger
+  // Servir uploads como static files
+  app.use('/uploads', express.static(join(__dirname, '..', '..', 'public', 'uploads')))
 
   app.setGlobalPrefix('api/v1')
   app.useGlobalPipes(
