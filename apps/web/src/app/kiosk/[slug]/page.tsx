@@ -1344,87 +1344,58 @@ export default function KioskPage() {
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-2xl rounded-2xl bg-[#09090e] border border-white/[0.08] p-6 shadow-2xl"
+              className="w-full max-w-sm rounded-2xl bg-[#09090e] border border-white/[0.08] p-6 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex gap-6">
-                {/* Image */}
-                <div className="w-48 shrink-0 overflow-hidden rounded-xl bg-white/[0.04]">
-                  {selectedProductDetail.imageUrl ? (
-                    <img src={selectedProductDetail.imageUrl} alt={selectedProductDetail.name}
-                      className="h-48 w-full object-cover" />
-                  ) : (
-                    <div className="flex h-48 items-center justify-center">
-                      <ChefHat className="h-16 w-16 text-white/10" />
-                    </div>
-                  )}
+              {/* Image */}
+              <div className="mb-6 overflow-hidden rounded-xl bg-white/[0.04]">
+                {selectedProductDetail.imageUrl ? (
+                  <img src={selectedProductDetail.imageUrl} alt={selectedProductDetail.name}
+                    className="h-64 w-full object-cover" />
+                ) : (
+                  <div className="flex h-64 items-center justify-center">
+                    <ChefHat className="h-20 w-20 text-white/10" />
+                  </div>
+                )}
+              </div>
+
+              {/* Info */}
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-xl font-bold text-white">{selectedProductDetail.name}</h3>
+                  <p className="mt-1 text-2xl font-black" style={{ color: brandText }}>
+                    {formatCurrency(selectedProductDetail.price)}
+                  </p>
                 </div>
 
-                {/* Info */}
-                <div className="flex-1 space-y-4">
-                  <div>
-                    <h3 className="text-2xl font-bold text-white">{selectedProductDetail.name}</h3>
-                    {selectedProductDetail.description && (
-                      <p className="mt-2 text-sm leading-relaxed text-white/60">
-                        {selectedProductDetail.description}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-black" style={{ color: brandText }}>
-                        {formatCurrency(selectedProductDetail.price)}
-                      </span>
-                      {selectedProductDetail.costPrice && (
-                        <span className="text-sm text-white/30">
-                          Custo: {formatCurrency(selectedProductDetail.costPrice)}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-white/50">
-                      Subtotal: {formatCurrency(selectedProductDetail.price * productDetailQty)}
-                    </p>
-                  </div>
-
-                  {selectedProductDetail.code && (
-                    <p className="text-xs text-white/40">Código: {selectedProductDetail.code}</p>
-                  )}
-
-                  <div className="flex items-center gap-3">
-                    <button onClick={() => setProductDetailQty(Math.max(1, productDetailQty - 1))}
-                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.07] transition-colors hover:bg-red-500/20 hover:text-red-400">
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <span className="flex-1 text-center text-lg font-bold">{productDetailQty}</span>
-                    <button onClick={() => setProductDetailQty(productDetailQty + 1)}
-                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.07] transition-colors hover:bg-emerald-500/20 hover:text-emerald-400">
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  <div className="flex gap-3 pt-2">
-                    <button
-                      onClick={() => { setSelectedProductDetail(null); setProductDetailQty(1) }}
-                      className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 font-medium text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white/80"
-                    >
-                      Fechar
-                    </button>
-                    <button
-                      onClick={() => {
-                        for (let i = 0; i < productDetailQty; i++) {
-                          addToCart(selectedProductDetail)
-                        }
-                        setSelectedProductDetail(null)
-                        setProductDetailQty(1)
-                      }}
-                      className="flex-1 gap-2 rounded-xl px-4 py-3 font-semibold text-white shadow-lg transition-all"
-                      style={{ ...brandBg, boxShadow: brandGlow }}
-                    >
-                      <Plus className="h-4 w-4 inline" /> Adicionar {productDetailQty}× ao pedido
-                    </button>
-                  </div>
+                {/* Quantity selector */}
+                <div className="flex items-center justify-between rounded-xl bg-white/[0.04] p-3">
+                  <button onClick={() => setProductDetailQty(Math.max(1, productDetailQty - 1))}
+                    className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/[0.07] transition-colors hover:bg-red-500/20 hover:text-red-400">
+                    <Minus className="h-5 w-5" />
+                  </button>
+                  <span className="text-2xl font-bold">{productDetailQty}</span>
+                  <button onClick={() => setProductDetailQty(productDetailQty + 1)}
+                    className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/[0.07] transition-colors hover:bg-emerald-500/20 hover:text-emerald-400">
+                    <Plus className="h-5 w-5" />
+                  </button>
                 </div>
+
+                {/* Add button */}
+                <button
+                  onClick={() => {
+                    for (let i = 0; i < productDetailQty; i++) {
+                      addToCart(selectedProductDetail)
+                    }
+                    setSelectedProductDetail(null)
+                    setProductDetailQty(1)
+                  }}
+                  className="w-full gap-2 rounded-xl px-4 py-4 font-bold text-white shadow-lg transition-all"
+                  style={{ ...brandBg, boxShadow: brandGlow }}
+                >
+                  <Plus className="h-5 w-5 inline mr-2" />
+                  Adicionar {productDetailQty}× ao pedido
+                </button>
               </div>
             </motion.div>
           </motion.div>
