@@ -1318,11 +1318,6 @@ export default function KioskPage() {
                   className="text-sm text-white/25 transition-colors hover:text-white/50">
                   ← Voltar ao pedido
                 </button>
-                <span className="text-white/[0.08]">|</span>
-                <button onClick={resetAll}
-                  className="text-sm text-white/25 transition-colors hover:text-white/50">
-                  Novo pedido
-                </button>
               </div>
             </motion.div>
           )}
