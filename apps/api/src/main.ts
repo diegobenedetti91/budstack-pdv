@@ -3,8 +3,22 @@ import { ValidationPipe } from '@nestjs/common'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import helmet from 'helmet'
 import { AppModule } from './app.module'
+import { execSync } from 'child_process'
 
 async function bootstrap() {
+  // Rodar migrations automaticamente no startup
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      console.log('🔄 Executando migrations...')
+      execSync('npx prisma migrate deploy --schema=../../packages/database/prisma/schema.prisma', {
+        stdio: 'inherit',
+      })
+      console.log('✅ Migrations concluídas')
+    } catch (error) {
+      console.error('⚠️ Erro ao rodar migrations:', error.message)
+    }
+  }
+
   const app = await NestFactory.create(AppModule)
 
   app.use(helmet({
