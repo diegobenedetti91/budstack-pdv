@@ -10,6 +10,7 @@ import { diskStorage } from 'multer'
 import { extname } from 'path'
 import { randomUUID } from 'crypto'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
+import { Public } from '../../common/decorators/public.decorator'
 
 const storage = diskStorage({
   destination: (req, file, cb) => {
@@ -49,6 +50,7 @@ export class UploadsController {
   }
 
   @Get(':filename')
+  @Public()
   async getFile(@Param('filename') filename: string, @Res() res: Response) {
     const { createReadStream } = require('fs')
     const uploadPath = './public/uploads'
