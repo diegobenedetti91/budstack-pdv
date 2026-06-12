@@ -184,7 +184,8 @@ onChange={async (e) => {
                       const { url } = await res.json()
                       setValue('imageUrl', url)
                     } catch (error) {
-                      alert('Erro ao fazer upload: ' + error.message)
+                      const msg = error instanceof Error ? error.message : 'Erro desconhecido'
+                      alert('Erro ao fazer upload: ' + msg)
                     }
                   }}
 
