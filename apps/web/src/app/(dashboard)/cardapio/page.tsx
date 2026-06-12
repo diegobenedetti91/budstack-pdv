@@ -160,7 +160,37 @@ function ProductModal({ onClose, editing, categories }: { onClose: () => void; e
             </div>
             <div className="flex-1 space-y-1.5">
               <Label>URL da Imagem</Label>
-              <Input {...register('imageUrl')} placeholder="https://..." />
+              <div className="flex gap-2">
+                <Input {...register('imageUrl')} placeholder="https://..." />
+                <input
+                  type="file"
+                  id="imageUpload"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.currentTarget.files?.[0]
+                    if (!file) return
+                    const formData = new FormData()
+                    formData.append('file', file)
+                    try {
+                      const res = await fetch('/api/v1/uploads', { method: 'POST', body: formData })
+                      const { url } = await res.json()
+                      setValue('imageUrl', url)
+                    } catch (error) {
+                      alert('Erro ao fazer upload')
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById('imageUpload')?.click()}
+                  className="shrink-0"
+                >
+                  Upload
+                </Button>
+              </div>
               {errors.imageUrl && <p className="text-xs text-red-500">{errors.imageUrl.message}</p>}
             </div>
           </div>
