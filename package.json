@@ -9,7 +9,7 @@
   "scripts": {
     "prebuild": "npm install --force",
     "build": "npm run build:api",
-    "start": "node apps/api/dist/main",
+    "start": "node apps/api/dist/apps/api/src/main.js",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
@@ -19,7 +19,7 @@
     "build:api": "cd apps/api && npm run build",
     "build:api:prod": "npm install --force && cd packages/database && npx prisma@5 generate && npx prisma@5 migrate deploy && cd ../.. && npm run build:api",
     "build:web": "cd apps/web && npm run build",
-    "start:api": "node apps/api/dist/main",
+    "start:api": "node apps/api/dist/apps/api/src/main.js",
     "start:web": "cd apps/web && npm start"
   },
   "devDependencies": {
