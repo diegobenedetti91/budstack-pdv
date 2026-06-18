@@ -94,6 +94,16 @@ export default function NotificacoesPage() {
 
   // Pedidos com conta solicitada (campo billRequestedAt persistido no banco)
 
+  const deliver = useMutation({
+    mutationFn: async ({ orderId, itemId }: { orderId: string; itemId: string }) => {
+      await api.patch(`/orders/${orderId}/items/${itemId}/status`, { status: 'DELIVERED' })
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notif-ready-orders'] })
+      toast({ title: 'Item marcado como entregue' })
+    },
+  })
+
   const deliverAll = useMutation({
     mutationFn: async () => {
       for (const item of readyItems) {
