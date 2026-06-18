@@ -5,7 +5,7 @@
   "scripts": {
     "build": "npx @nestjs/cli build",
     "dev": "npx @nestjs/cli start --watch",
-    "start": "npm run db:migrate && node dist/main",
+    "start": "node dist/main",
     "lint": "eslint src --ext .ts",
     "type-check": "tsc --noEmit",
     "db:generate": "cd ../../packages/database && npm run db:generate",
