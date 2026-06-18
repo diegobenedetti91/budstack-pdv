@@ -5,7 +5,8 @@ import helmet from 'helmet'
 import { AppModule } from './app.module'
 
 async function bootstrap() {
-  console.log('🔍 JWT_SECRET:', process.env.JWT_SECRET ? '✅ Configured' : '❌ Not found')
+  console.log('🔍 JWT_SECRET length:', process.env.JWT_SECRET?.length || 0)
+  console.log('🔍 JWT_SECRET value:', process.env.JWT_SECRET?.substring(0, 20) + '...')
   const app = await NestFactory.create(AppModule)
 
   app.use(helmet({
