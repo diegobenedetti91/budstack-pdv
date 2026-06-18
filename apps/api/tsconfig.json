@@ -4,7 +4,6 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "outDir": "./dist",
-    "rootDir": "./src",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "strictNullChecks": false,
@@ -17,6 +16,6 @@
       "@budstack/types": ["../../packages/types/src/index"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../../packages/types/**/*"],
   "exclude": ["node_modules", "dist"]
 }
