@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "prebuild": "npm install --force --workspace-root",
+    "prebuild": "npm install --force",
     "build": "npm run build:api && npm run build:web",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
@@ -15,8 +15,8 @@
     "db:generate": "cd packages/database && npm run db:generate",
     "db:migrate": "cd packages/database && npm run db:migrate",
     "db:studio": "cd packages/database && npx prisma studio",
-    "build:api": "npm install --force && cd apps/api && npm run build",
-    "build:web": "npm install --force && cd apps/web && npm run build",
+    "build:api": "cd apps/api && npm run build",
+    "build:web": "cd apps/web && npm run build",
     "start:api": "node apps/api/dist/main",
     "start:web": "cd apps/web && npm start"
   },
