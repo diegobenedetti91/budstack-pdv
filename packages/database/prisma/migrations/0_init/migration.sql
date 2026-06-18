@@ -1,0 +1,1 @@
+-- Initial migration created from existing schema
