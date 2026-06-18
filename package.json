@@ -18,7 +18,7 @@
     "db:studio": "cd packages/database && npx prisma studio",
     "build:api": "cd apps/api && npm run build",
     "build:web": "cd apps/web && npm run build",
-    "start:api": "npx prisma migrate deploy --schema=packages/database/prisma/schema.prisma && node apps/api/dist/main",
+    "start:api": "cd apps/api && npm start",
     "start:web": "cd apps/web && npm start"
   },
   "devDependencies": {
