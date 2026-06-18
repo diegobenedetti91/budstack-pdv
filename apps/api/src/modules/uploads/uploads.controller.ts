@@ -7,7 +7,6 @@ import { Response } from 'express'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { ApiTags, ApiBearerAuth, ApiConsumes, ApiOperation, ApiBody } from '@nestjs/swagger'
 import { diskStorage } from 'multer'
-import type { File } from 'multer'
 import { extname } from 'path'
 import { randomUUID } from 'crypto'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
@@ -44,7 +43,7 @@ export class UploadsController {
         fileIsRequired: true,
       }),
     )
-    file: File,
+    file: any,
   ) {
     const baseUrl = process.env.APP_URL ?? 'http://localhost:3001'
     return { url: `${baseUrl}/api/v1/uploads/${file.filename}`, filename: file.filename }
