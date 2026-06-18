@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "prebuild": "npm install --force",
-    "build": "npm run build:api && npm run build:web",
+    "build": "npm run build:api",
     "start": "node apps/api/dist/main",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
