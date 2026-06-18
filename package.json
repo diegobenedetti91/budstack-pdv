@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "prebuild": "cd packages/database && npm run db:generate",
+    "prebuild": "npm install --force && cd packages/database && npm run db:generate",
     "build": "npm run build:api && npm run build:web",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
