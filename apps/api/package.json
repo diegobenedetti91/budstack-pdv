@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "npx @nestjs/cli build || true; npm run db:migrate",
+    "build": "npx @nestjs/cli build",
     "dev": "npx @nestjs/cli start --watch",
     "start": "node dist/main",
     "lint": "eslint src --ext .ts",
