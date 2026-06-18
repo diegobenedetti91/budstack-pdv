@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { ThrottlerModule } from '@nestjs/throttler'
 import { APP_GUARD } from '@nestjs/core'
+import { AppController } from './app.controller'
 import { PrismaModule } from './modules/prisma/prisma.module'
 import { AuthModule } from './modules/auth/auth.module'
 import { TenantsModule } from './modules/tenants/tenants.module'
@@ -24,6 +25,7 @@ import { FiscalModule } from './modules/fiscal/fiscal.module'
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard'
 
 @Module({
+  controllers: [AppController],
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
